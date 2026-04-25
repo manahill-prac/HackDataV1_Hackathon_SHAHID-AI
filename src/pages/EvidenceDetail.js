@@ -32,31 +32,39 @@ function EvidenceDetail() {
 
   const retryAi = async () => {
     const key = process.env.REACT_APP_GEMINI_API_KEY || window.localStorage.getItem("gemini_api_key") || "";
-    if (!key) return;
-    const prompt = `You are a Pakistani legal forensic AI assistant. Analyze this crime scene evidence strictly as JSON only. Incident: ${evidence.incidentType}. Location: ${evidence.locationLabel}. Time: ${evidence.timestamp}. Return JSON with statement_en, statement_ur, ppc_sections(3), case_score, risk_assessment, recommended_action.`;
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    });
-    const data = await res.json();
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    const aiAnalysis = JSON.parse(raw.replace(/```json|```/g, "").trim());
-    saveEvidence({ ...evidence, aiAnalysis });
-    window.location.reload();
+    if (!key) {
+      alert("Gemini API key missing. Set REACT_APP_GEMINI_API_KEY or localStorage 'gemini_api_key'.");
+      return;
+    }
+    try {
+      const prompt = `You are a Pakistani legal forensic AI assistant. Analyze this crime scene evidence strictly as JSON only. Incident: ${evidence.incidentType}. Location: ${evidence.locationLabel}. Time: ${evidence.timestamp}. Return JSON with statement_en, statement_ur, ppc_sections(3), case_score, risk_assessment, recommended_action.`;
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      });
+      const data = await res.json();
+      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      const aiAnalysis = JSON.parse(raw.replace(/```json|```/g, "").trim());
+      saveEvidence({ ...evidence, aiAnalysis });
+      window.location.reload();
+    } catch (e) {
+      alert(`AI retry failed: ${e.message}`);
+    }
   };
 
   const verifyHash = async () => {
     try {
-      if (evidence.photoDataUrl) {
+      if (evidence.photoDataUrl && evidence.photoDataUrl.startsWith("data:")) {
+        // Only re-hash data URLs — blob URLs are not stable across page reloads
         const digest = await crypto.subtle.digest("SHA-256", await (await fetch(evidence.photoDataUrl)).arrayBuffer());
         const hex = Array.from(new Uint8Array(digest))
           .map((v) => v.toString(16).padStart(2, "0"))
           .join("");
-        alert(hex === evidence.hash ? "Verified: hash matches" : "Warning: hash mismatch");
+        alert(hex === evidence.hash ? "Verified: hash matches | ہیش تصدیق شدہ" : "Warning: hash mismatch | خبردار: ہیش مختلف");
         return;
       }
-      alert("No local media available for re-hash. Stored hash shown.");
+      alert("No local media available for re-hash. Stored hash shown. | مقامی میڈیا دستیاب نہیں۔");
     } catch (error) {
       alert(`Verification error: ${error.message}`);
     }

@@ -94,13 +94,17 @@ function PanicButton() {
       setCountdown((c) => {
         if (c <= 1) {
           window.clearInterval(t);
-          triggerEmergency();
+          // Use a ref-safe call to avoid stale closure
+          setCountdown(0);
+          // Defer so state settles before triggering
+          setTimeout(triggerEmergency, 0);
           return 0;
         }
         return c - 1;
       });
     }, 1000);
     return () => window.clearInterval(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countdown]);
 
   return (

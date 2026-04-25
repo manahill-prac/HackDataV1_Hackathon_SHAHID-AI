@@ -1,4 +1,5 @@
 const MODEL_PATH = "/models";
+const SCRIPT_LOAD_TIMEOUT_MS = 12000;
 let modelState = { loaded: false, loading: false };
 
 function ensureFaceApiScript() {
@@ -9,17 +10,40 @@ function ensureFaceApiScript() {
     }
     const existing = document.querySelector('script[data-faceapi="local"]');
     if (existing) {
-      existing.addEventListener("load", () => resolve(window.faceapi));
-      existing.addEventListener("error", reject);
+      // Script already injected — wait for it or resolve if already loaded
+      if (window.faceapi) {
+        resolve(window.faceapi);
+        return;
+      }
+      const onLoad = () => resolve(window.faceapi);
+      const onError = () => reject(new Error("face-api.min.js failed to load"));
+      existing.addEventListener("load", onLoad, { once: true });
+      existing.addEventListener("error", onError, { once: true });
       return;
     }
+
     const script = document.createElement("script");
     script.src = "/models/face-api.min.js";
     script.async = true;
     script.defer = true;
     script.dataset.faceapi = "local";
-    script.onload = () => resolve(window.faceapi);
-    script.onerror = reject;
+
+    const timeout = setTimeout(() => {
+      reject(new Error("face-api.min.js load timed out after 12s. Ensure /public/models/face-api.min.js exists."));
+    }, SCRIPT_LOAD_TIMEOUT_MS);
+
+    script.onload = () => {
+      clearTimeout(timeout);
+      if (window.faceapi) {
+        resolve(window.faceapi);
+      } else {
+        reject(new Error("face-api.min.js loaded but window.faceapi is undefined"));
+      }
+    };
+    script.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error("face-api.min.js not found at /public/models/face-api.min.js"));
+    };
     document.body.appendChild(script);
   });
 }
@@ -30,7 +54,7 @@ export async function loadFaceModels() {
   modelState.loading = true;
   try {
     const faceapi = await ensureFaceApiScript();
-    if (!faceapi) throw new Error("face-api library not found in /public/models");
+    if (!faceapi) throw new Error("face-api library not available");
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_PATH),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_PATH),
@@ -39,12 +63,13 @@ export async function loadFaceModels() {
     modelState = { loaded: true, loading: false };
     return { ok: true, cached: false };
   } catch (error) {
-    modelState.loading = false;
+    modelState = { loaded: false, loading: false };
     return { ok: false, error: error.message };
   }
 }
 
 function vectorDistance(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return 1;
   let sum = 0;
   for (let i = 0; i < a.length; i += 1) {
     const d = a[i] - b[i];
@@ -65,13 +90,16 @@ export function descriptorSimilarityScore(distance) {
 
 export async function detectFacesFromElement(element) {
   const faceapi = window.faceapi;
-  if (!faceapi || !modelState.loaded) throw new Error("Face models not loaded");
+  if (!faceapi) throw new Error("face-api library not loaded");
+  if (!modelState.loaded) throw new Error("Face models not loaded yet");
+  if (!element) throw new Error("No element provided for face detection");
+
   const detections = await faceapi
     .detectAllFaces(element, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.45 }))
     .withFaceLandmarks()
     .withFaceDescriptors();
 
-  return detections.map((detection, idx) => {
+  return (detections || []).map((detection, idx) => {
     const box = detection.detection.box;
     return {
       faceId: `face-${Date.now()}-${idx}`,
@@ -84,21 +112,25 @@ export async function detectFacesFromElement(element) {
 }
 
 export async function imageFromDataUrl(dataUrl) {
+  if (!dataUrl) return Promise.reject(new Error("No dataUrl provided"));
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onerror = () => reject(new Error("Failed to load image from dataUrl"));
     img.src = dataUrl;
   });
 }
 
 export function matchDescriptors(probeFaces, evidenceRecords) {
+  if (!Array.isArray(probeFaces) || !Array.isArray(evidenceRecords)) return [];
   const matches = [];
   probeFaces.forEach((face) => {
+    if (!face?.descriptor) return;
     evidenceRecords.forEach((record) => {
       const known = record.faceDescriptors || [];
       known.forEach((descriptor) => {
+        if (!descriptor) return;
         const distance = vectorDistance(face.descriptor, descriptor);
         const strength = strengthFromDistance(distance);
         if (strength !== "weak") {
@@ -119,6 +151,7 @@ export function matchDescriptors(probeFaces, evidenceRecords) {
 }
 
 export function buildSuspectClusters(matches) {
+  if (!Array.isArray(matches) || !matches.length) return [];
   const byEvidence = matches.reduce((acc, match) => {
     acc[match.matchedEvidenceId] = acc[match.matchedEvidenceId] || [];
     acc[match.matchedEvidenceId].push(match);

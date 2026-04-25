@@ -3,7 +3,8 @@ function sigmoid(x) {
 }
 
 function normalize(v, max) {
-  if (!max) return 0;
+  // Guard: max=0, null, Infinity, or NaN all return 0 safely
+  if (!max || !isFinite(max) || max <= 0) return 0;
   return v / max;
 }
 
@@ -13,13 +14,19 @@ function typeVector(type) {
 }
 
 export function buildCrimeDataset(evidence) {
-  const maxLat = Math.max(...evidence.map((e) => Math.abs(e.coords?.latitude || 0)), 1);
-  const maxLng = Math.max(...evidence.map((e) => Math.abs(e.coords?.longitude || 0)), 1);
+  if (!Array.isArray(evidence) || !evidence.length) return [];
+
+  const latValues = evidence.map((e) => Math.abs(e.coords?.latitude || 0));
+  const lngValues = evidence.map((e) => Math.abs(e.coords?.longitude || 0));
+  // Safe max — avoids Math.max(...[]) = -Infinity on empty arrays
+  const maxLat = latValues.length ? Math.max(...latValues) : 1;
+  const maxLng = lngValues.length ? Math.max(...lngValues) : 1;
+
   return evidence.map((entry) => {
     const d = new Date(entry.timestamp);
-    const hour = d.getHours();
-    const weekday = d.getDay();
-    const month = d.getMonth() + 1;
+    const hour = isNaN(d.getTime()) ? 0 : d.getHours();
+    const weekday = isNaN(d.getTime()) ? 0 : d.getDay();
+    const month = isNaN(d.getTime()) ? 1 : d.getMonth() + 1;
     const repeatSignal = (entry.faceMatches?.length || 0) > 0 ? 1 : 0;
     const x = [
       1,
@@ -65,6 +72,9 @@ export function inferRisk(row, model) {
 }
 
 export function detectAnomalies(evidence) {
+  if (!Array.isArray(evidence) || !evidence.length) {
+    return { anomalies: [], mean: 0, std: 1 };
+  }
   const dayMap = evidence.reduce((acc, row) => {
     const key = new Date(row.timestamp).toISOString().slice(0, 10);
     acc[key] = (acc[key] || 0) + 1;
@@ -82,6 +92,7 @@ export function detectAnomalies(evidence) {
 }
 
 export function buildCityForecast(dataset, model) {
+  if (!dataset.length) return [];
   const byCity = {};
   dataset.forEach((row) => {
     const risk = inferRisk(row, model);
@@ -106,23 +117,36 @@ export function buildCityForecast(dataset, model) {
 }
 
 export function generatePredictionIntelligence(evidence) {
-  const dataset = buildCrimeDataset(evidence);
-  const model = trainLocalLogisticModel(dataset);
-  const anomalies = detectAnomalies(evidence);
-  const cityForecast = buildCityForecast(dataset, model);
-  const fusionSignals = cityForecast
-    .filter((city) => city.drivers.includes("repeat suspect activity") && city.prediction > 5)
-    .map((city) => ({
-      city: city.city,
-      label: "Correlated Threat Signal Detected",
-      threatScore: Math.min(99, Math.round(city.prediction * 8 + city.confidence / 2)),
-    }));
+  // Defensive: always return a valid shape even with no data
+  const safeEvidence = Array.isArray(evidence) ? evidence : [];
+  try {
+    const dataset = buildCrimeDataset(safeEvidence);
+    const model = trainLocalLogisticModel(dataset);
+    const anomalies = detectAnomalies(safeEvidence);
+    const cityForecast = buildCityForecast(dataset, model);
+    const fusionSignals = cityForecast
+      .filter((city) => city.drivers.includes("repeat suspect activity") && city.prediction > 5)
+      .map((city) => ({
+        city: city.city,
+        label: "Correlated Threat Signal Detected",
+        threatScore: Math.min(99, Math.round(city.prediction * 8 + city.confidence / 2)),
+      }));
 
-  return {
-    model,
-    anomalies,
-    cityForecast,
-    fusionSignals,
-    trainedAt: model.trainedAt,
-  };
+    return {
+      model,
+      anomalies,
+      cityForecast,
+      fusionSignals,
+      trainedAt: model.trainedAt,
+    };
+  } catch (e) {
+    console.error("[SHAHID.AI crimeML] generatePredictionIntelligence failed:", e.message);
+    return {
+      model: { weights: [], bias: 0, trainedAt: new Date().toISOString() },
+      anomalies: { anomalies: [], mean: 0, std: 1 },
+      cityForecast: [],
+      fusionSignals: [],
+      trainedAt: new Date().toISOString(),
+    };
+  }
 }

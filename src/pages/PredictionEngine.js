@@ -1,16 +1,70 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { getEvidenceList } from "../utils/evidenceStore";
 import { generatePredictionIntelligence } from "../utils/crimeML";
 
 function PredictionEngine() {
-  const evidence = useMemo(() => getEvidenceList(), []);
-  const intel = useMemo(() => generatePredictionIntelligence(evidence), [evidence]);
+  const [intel, setIntel] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    // Defer heavy ML computation off the render cycle to prevent UI freeze
+    const timer = setTimeout(() => {
+      try {
+        const evidence = getEvidenceList();
+        const result = generatePredictionIntelligence(evidence);
+        setIntel(result);
+      } catch (e) {
+        setError(`Prediction engine error: ${e.message}`);
+      } finally {
+        setLoading(false);
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="space-y-6">
+        <header className="ui-card">
+          <h1 className="text-2xl font-black">Predictive Crime Intelligence | پیش گوئی انٹیلیجنس</h1>
+        </header>
+        <div className="ui-card flex items-center gap-3">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#4F8090] border-t-transparent" />
+          <span className="text-sm ui-muted">Training local prediction model... | مقامی ماڈل تربیت ہو رہا ہے</span>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !intel) {
+    return (
+      <section className="space-y-6">
+        <header className="ui-card">
+          <h1 className="text-2xl font-black">Predictive Crime Intelligence | پیش گوئی انٹیلیجنس</h1>
+        </header>
+        <div className="ui-card text-center space-y-3">
+          <p className="text-[#EF9B20] font-semibold">Module temporarily unavailable — core evidence system still operational</p>
+          <p className="text-sm ui-muted">{error || "Could not generate prediction intelligence."}</p>
+          <button
+            type="button"
+            onClick={() => { setError(""); setLoading(true); }}
+            className="ui-primary-btn text-sm"
+          >
+            Retry | دوبارہ کوشش
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6">
       <header className="ui-card">
         <h1 className="text-2xl font-black">Predictive Crime Intelligence | پیش گوئی انٹیلیجنس</h1>
-        <p className="ui-muted mt-2">Model Last Trained: {new Date(intel.trainedAt).toLocaleString("en-PK", { hour12: false })}</p>
+        <p className="ui-muted mt-2">
+          Model Last Trained: {new Date(intel.trainedAt).toLocaleString("en-PK", { hour12: false })}
+        </p>
       </header>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -30,33 +84,40 @@ function PredictionEngine() {
 
       <article className="ui-card">
         <h2 className="text-lg font-bold">48-Hour Forecast | اگلے 48 گھنٹے</h2>
-        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {intel.cityForecast.slice(0, 9).map((city) => (
-            <div key={city.city} className="rounded-xl border border-[#4F8090]/35 p-3">
-              <p className="font-semibold">{city.city}</p>
-              <p className="ui-muted text-sm">Prediction: {city.prediction}</p>
-              <p className="ui-muted text-sm">Confidence: {city.confidence}%</p>
-              <ul className="mt-2 text-xs text-[#B6C1D1]">
-                {city.drivers.map((driver) => (
-                  <li key={`${city.city}-${driver}`}>- {driver}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+        {intel.cityForecast.length === 0 ? (
+          <p className="mt-3 text-sm ui-muted">No forecast data available. Capture evidence to generate predictions.</p>
+        ) : (
+          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {intel.cityForecast.slice(0, 9).map((city) => (
+              <div key={city.city} className="rounded-xl border border-[#4F8090]/35 p-3">
+                <p className="font-semibold">{city.city}</p>
+                <p className="ui-muted text-sm">Prediction: {city.prediction}</p>
+                <p className="ui-muted text-sm">Confidence: {city.confidence}%</p>
+                <ul className="mt-2 text-xs text-[#B6C1D1]">
+                  {(city.drivers || []).map((driver) => (
+                    <li key={`${city.city}-${driver}`}>- {driver}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
       </article>
 
       <article className="ui-card">
         <h2 className="text-lg font-bold">Anomaly Warnings | غیر معمولی خطرات</h2>
         <div className="mt-3 space-y-2">
-          {intel.anomalies.anomalies.map((a) => (
-            <div key={a.day} className="rounded-lg border border-[#EF9B20]/35 p-3 text-sm">
-              <p className="font-semibold text-[#EF9B20]">Emerging Hotspot Warning</p>
-              <p>Date: {a.day}</p>
-              <p>Risk Spike +{Math.round(a.z * 25)}%</p>
-            </div>
-          ))}
-          {!intel.anomalies.anomalies.length ? <p className="ui-muted text-sm">No anomaly spike currently detected.</p> : null}
+          {intel.anomalies.anomalies.length === 0 ? (
+            <p className="ui-muted text-sm">No anomaly spike currently detected.</p>
+          ) : (
+            intel.anomalies.anomalies.map((a) => (
+              <div key={a.day} className="rounded-lg border border-[#EF9B20]/35 p-3 text-sm">
+                <p className="font-semibold text-[#EF9B20]">Emerging Hotspot Warning</p>
+                <p>Date: {a.day}</p>
+                <p>Risk Spike +{Math.round(a.z * 25)}%</p>
+              </div>
+            ))
+          )}
         </div>
       </article>
     </section>
