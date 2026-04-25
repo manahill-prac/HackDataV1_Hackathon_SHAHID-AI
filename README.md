@@ -69,7 +69,7 @@ From a phone camera to a court-ready evidence package.
 - Emergency Panic Button
 - Guided Demo Mode for Judges
 
-# System Design Architecture
+# unctional architecture / logical system design
 
 ```mermaid
 flowchart TD
