@@ -212,7 +212,7 @@ Potential applications:
 ---
 
 # Live Demo
-🔗 Add deployed demo link here
+🔗 [Shahid-AI](https://hack-data-v1-hackathon-shahid-ai.vercel.app/dashboard)
 
 ---
 
