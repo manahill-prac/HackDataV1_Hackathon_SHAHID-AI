@@ -73,100 +73,90 @@ From a phone camera to a court-ready evidence package.
 
 # System Design Architecture
 
-## High-Level Architecture
+```mermaid
+flowchart TD
 
-```text
-Citizen / Officer Inputs
-(Photos • Video • Voice • CCTV • Uploads)
-                │
-                ▼
-────────────────────────────────────────
-Layer 1 — Evidence Capture Layer
-- Media acquisition
-- GPS + timestamp extraction
-- Incident metadata capture
-────────────────────────────────────────
-                │
-                ▼
-Layer 2 — Integrity & Security Layer
-- SHA-256 evidence hashing
-- Tamper-evident custody chain
-- Evidence verification
-- Encryption-ready storage model
-────────────────────────────────────────
-                │
-                ▼
-Layer 3 — AI Intelligence Layer
-- Gemini witness generation
-- Face intelligence correlation
-- Crime prediction ML
-- Threat anomaly detection
-────────────────────────────────────────
-                │
-                ▼
-Layer 4 — Legal Intelligence Layer
-- BM25 + TF-IDF Legal RAG
-- PPC / CrPC / QSO retrieval
-- Explainable law matching
-- FIR draft generation
-────────────────────────────────────────
-                │
-                ▼
-Layer 5 — Decision & Output Layer
-- Court submission packet
-- Threat command board
-- Case readiness scoring
-- Verification & investigation support
-────────────────────────────────────────
+U[Users<br/>Citizens | Investigators | Lawyers | Courts]
+
+subgraph L1["Layer 1 — Evidence Capture"]
+A1[Photo / Video Upload]
+A2[CCTV Evidence]
+A3[Voice Evidence]
+A4[Metadata Capture<br/>GPS + Timestamp]
+end
+
+subgraph L2["Layer 2 — Integrity & Security"]
+B1[SHA-256 Evidence Hashing]
+B2[Chain of Custody Log]
+B3[Evidence Verification]
+B4[Integrity Audit Trail]
+end
+
+subgraph L3["Layer 3 — AI Intelligence"]
+C1[AI Witness Generation]
+C2[Face Intelligence]
+C3[Crime Prediction ML]
+C4[Threat Correlation Index]
+end
+
+subgraph L4["Layer 4 — Legal Intelligence"]
+D1[Legal RAG Engine]
+D2[PPC / CrPC / QSO Retrieval]
+D3[FIR Draft Generation]
+D4[Court Submission Packet]
+end
+
+subgraph L5["Layer 5 — Decision Support"]
+E1[Threat Command Center]
+E2[Case Readiness Scoring]
+E3[Investigation Support]
+E4[Public Verification]
+end
+
+subgraph Storage["Data & Support Layer"]
+S1[(Evidence Store)]
+S2[(Hash Ledger)]
+S3[(Legal Corpus)]
+S4[(Prediction Engine)]
+end
+
+U --> A1
+U --> A2
+U --> A3
+
+A1 --> A4
+A2 --> A4
+A3 --> A4
+
+A4 --> B1
+B1 --> B2
+B2 --> B3
+B3 --> B4
+
+B4 --> C1
+B4 --> C2
+B4 --> C3
+C1 --> C4
+C2 --> C4
+C3 --> C4
+
+C4 --> D1
+D1 --> D2
+D2 --> D3
+D3 --> D4
+
+D4 --> E1
+E1 --> E2
+E2 --> E3
+E3 --> E4
+
+S1 --- B2
+S2 --- B1
+S3 --- D1
+S4 --- C3
 ```
 
-## Data Flow Pipeline
 
-```text
-Capture Evidence
-→ Hash + Seal
-→ Chain of Custody
-→ AI Analysis
-→ Legal Retrieval
-→ Threat Correlation
-→ FIR Draft
-→ Court Submission Packet
-```
-
-## Core Components
-
-### Frontend Intelligence Layer
-- React SPA modular architecture  
-- Route-based modules for evidence, prediction, legal intelligence and demo mode  
-- Local browser storage for portable evidence records  
-
-### Intelligence Engines
-- Witness Intelligence Engine  
-- Legal Retrieval Engine  
-- Threat Fusion Engine  
-- Crime Prediction Engine  
-- Case Readiness Engine  
-
-### Security Architecture
-- SHA-256 hashing for integrity  
-- Linked custody event hashes  
-- Browser Crypto APIs  
-- Public hash verification workflow  
-- Role-based security model (demo architecture)
-
-## Architectural Highlights
-- Browser-native zero-cost architecture  
-- Hybrid symbolic + ML intelligence design  
-- Offline-capable legal retrieval and prediction  
-- Explainable AI outputs (not black-box only)  
-- Designed as modular justice-tech platform
-
-## System Design Philosophy
-SHAHID.AI follows:
-
-**Capture → Trust → Analyze → Correlate → Act**
-
-The system is designed to transform raw digital evidence into trusted, explainable, investigation-ready intelligence.
 
 
 # 5-Layer AI Fusion Architecture
