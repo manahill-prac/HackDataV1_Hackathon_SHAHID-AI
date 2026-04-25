@@ -14,7 +14,7 @@ function Dashboard() {
     return [
       { label: "Cases Tracked", urdu: "ٹریک شدہ کیسز", value: evidenceList.length },
       { label: "Evidence Sealed", urdu: "سیل شدہ ثبوت", value: verified },
-      { label: "FIRs Generated", urdu: "درج شدہ ایف آئی آر", value: firs },
+      { label: "FIR Drafts", urdu: "ایف آئی آر مسودے", value: firs },
       { label: "Suspects Flagged", urdu: "مشکوک افراد", value: flagged },
     ];
   }, [evidenceList]);

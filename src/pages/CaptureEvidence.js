@@ -205,6 +205,76 @@ function CaptureEvidence() {
     }
   };
 
+  const [uploadError, setUploadError] = useState("");
+  const [uploadHashing, setUploadHashing] = useState(false);
+
+  const handleUpload = async (file) => {
+    if (!file) return;
+    setUploadError("");
+    setAiError("");
+
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+    if (!isImage && !isVideo) {
+      setUploadError("Unsupported file type. Upload an image or video. | غیر معاون فائل۔ تصویر یا ویڈیو اپلوڈ کریں۔");
+      return;
+    }
+    if (file.size > 200 * 1024 * 1024) {
+      setUploadError("File exceeds 200MB limit. | فائل 200MB سے بڑی ہے۔");
+      return;
+    }
+
+    setUploadHashing(true);
+    try {
+      const buffer = await file.arrayBuffer();
+      const hash = await hashBufferToHex(buffer);
+      const meta = await collectLocation();
+      const timestamp = new Date().toISOString();
+
+      if (isImage) {
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = () => reject(new Error("Failed to read image file"));
+          reader.readAsDataURL(file);
+        });
+        setCaptured({
+          id: crypto.randomUUID(),
+          mediaType: "photo",
+          photoDataUrl: dataUrl,
+          videoUrl: "",
+          hash,
+          timestamp,
+          ...meta,
+          incidentType,
+          titleEn: "Uploaded Image Evidence",
+          titleUr: "اپلوڈ شدہ تصویری ثبوت",
+          uploadedFileName: file.name,
+        });
+      } else {
+        const videoUrl = URL.createObjectURL(file);
+        setCaptured({
+          id: crypto.randomUUID(),
+          mediaType: "video",
+          photoDataUrl: "",
+          videoUrl,
+          hash,
+          timestamp,
+          ...meta,
+          incidentType,
+          titleEn: "Uploaded Video Evidence",
+          titleUr: "اپلوڈ شدہ ویڈیو ثبوت",
+          uploadedFileName: file.name,
+        });
+      }
+      setSealed(false);
+    } catch (err) {
+      setUploadError(`Upload failed | اپلوڈ ناکام: ${err.message}`);
+    } finally {
+      setUploadHashing(false);
+    }
+  };
+
   const capturedAt = useMemo(
     () => (captured ? new Date(captured.timestamp).toLocaleString("en-PK", { hour12: false }) : ""),
     [captured]
@@ -259,6 +329,42 @@ function CaptureEvidence() {
               </button>
             )}
           </div>
+
+          {/* ── Upload Existing Evidence ───────────────────────────────── */}
+          <div className="mt-4 border-t border-[#4F8090]/20 pt-4">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#4F8090]">
+              Upload Existing Evidence | موجودہ ثبوت اپلوڈ کریں
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <label className="cursor-pointer rounded-lg border border-[#4F8090]/40 px-4 py-2 text-sm font-semibold text-[#F2F2F2] hover:border-[#4F8090] transition">
+                📁 Upload Image | تصویر اپلوڈ
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleUpload(e.target.files?.[0])}
+                />
+              </label>
+              <label className="cursor-pointer rounded-lg border border-[#4F8090]/40 px-4 py-2 text-sm font-semibold text-[#F2F2F2] hover:border-[#4F8090] transition">
+                🎬 Upload Video | ویڈیو اپلوڈ
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={(e) => handleUpload(e.target.files?.[0])}
+                />
+              </label>
+            </div>
+            {uploadHashing && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-[#4F8090]">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-[#4F8090] border-t-transparent" />
+                Computing SHA-256 hash... | ہیش تیار ہو رہا ہے
+              </div>
+            )}
+            {uploadError && (
+              <p className="mt-2 rounded-lg bg-red-500/10 p-2 text-xs text-red-300">{uploadError}</p>
+            )}
+          </div>
         </article>
 
         <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -282,6 +388,11 @@ function CaptureEvidence() {
                 <p className="text-slate-700">
                   <span className="font-semibold">Timestamp:</span> {capturedAt}
                 </p>
+                {captured.uploadedFileName && (
+                  <p className="text-slate-700">
+                    <span className="font-semibold">File:</span> {captured.uploadedFileName}
+                  </p>
+                )}
               </div>
               <button
                 type="button"

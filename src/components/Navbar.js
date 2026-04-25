@@ -7,7 +7,7 @@ const links = [
   { to: "/cctv", label: "CCTV Portal", urdu: "سی سی ٹی وی پورٹل" },
   { to: "/voice", label: "Voice Evidence", urdu: "آواز ثبوت" },
   { to: "/analytics", label: "Analytics", urdu: "تجزیات" },
-  { to: "/face-intelligence", label: "Face Intel", urdu: "چہرہ انٹیلیجنس" },
+  { to: "/face-intelligence", label: "Face Intelligence", urdu: "چہرہ انٹیلیجنس" },
   { to: "/prediction-engine", label: "Prediction", urdu: "پیش گوئی" },
   { to: "/verify", label: "Verify", urdu: "تصدیق" },
 ];
@@ -52,6 +52,18 @@ function Navbar() {
               {item.label}
             </NavLink>
           ))}
+          <NavLink
+            to="/demo"
+            className={({ isActive }) =>
+              `rounded-lg px-3 py-2 text-sm font-bold transition whitespace-nowrap border ${
+                isActive
+                  ? "border-[#EF9B20] bg-[#EF9B20]/20 text-[#EF9B20]"
+                  : "border-[#EF9B20]/50 text-[#EF9B20] hover:bg-[#EF9B20]/10"
+              }`
+            }
+          >
+            ⚡ Demo
+          </NavLink>
         </nav>
 
         <div
@@ -65,6 +77,19 @@ function Navbar() {
               <span className="ml-1 text-xs text-[#B6C1D1]">| {item.urdu}</span>
             </NavLink>
           ))}
+          <NavLink
+            to="/demo"
+            onClick={() => setOpen(false)}
+            className={({ isActive }) =>
+              `rounded-lg px-3 py-2 text-sm font-bold transition border ${
+                isActive
+                  ? "border-[#EF9B20] bg-[#EF9B20]/20 text-[#EF9B20]"
+                  : "border-[#EF9B20]/50 text-[#EF9B20]"
+              }`
+            }
+          >
+            ⚡ Demo Mode
+          </NavLink>
         </div>
       </div>
     </header>

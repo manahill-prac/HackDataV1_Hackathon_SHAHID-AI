@@ -101,10 +101,10 @@ function Analytics() {
   const statCards = [
     { label: "Total Incidents", urdu: "کل واقعات", value: stats.totalIncidents },
     { label: "Hotspot Areas", urdu: "ہاٹ اسپاٹ علاقے", value: stats.hotspotAreas },
-    { label: "Prediction Accuracy", urdu: "پیش گوئی درستگی", value: `${stats.predictionAccuracy}%` },
+    { label: "Model Confidence", urdu: "ماڈل اعتماد", value: `${stats.predictionAccuracy}%` },
     { label: "Arrests Made", urdu: "گرفتاریاں", value: stats.arrestsMade },
     { label: "Evidence Sealed", urdu: "سیل شدہ ثبوت", value: stats.evidenceSealed },
-    { label: "FIRs Filed", urdu: "درج ایف آئی آر", value: stats.firsFiled },
+    { label: "FIR Drafts", urdu: "ایف آئی آر مسودے", value: stats.firsFiled },
   ];
 
   const maxBarValue = Math.max(...typeBreakdown.map((item) => item.value), 1);
@@ -413,10 +413,10 @@ function Analytics() {
             {monthCounts.map((m, i) => (
               <g key={m.month}>
                 <circle cx={60 + i * 70} cy={190 - m.count * 8} r="4" fill="#1A56DB" />
-                <text x={52 + i * 70} y="220" fontSize="11" fill="#334155">
+                <text x={52 + i * 70} y="220" fontSize="11" fill="#94a3b8">
                   {m.month}
                 </text>
-                <text x={56 + i * 70} y={180 - m.count * 8} fontSize="10" fill="#0f172a">
+                <text x={56 + i * 70} y={180 - m.count * 8} fontSize="10" fill="#e2e8f0">
                   {m.count}
                 </text>
               </g>
@@ -431,11 +431,11 @@ function Analytics() {
               const y = 20 + index * 35;
               return (
                 <g key={item.key}>
-                  <text x="0" y={y + 16} fontSize="12" fill="#475569">
+                  <text x="0" y={y + 16} fontSize="12" fill="#94a3b8">
                     {item.key}
                   </text>
                   <rect x="140" y={y} width={width} height="20" rx="6" fill="#1A56DB" />
-                  <text x={145 + width} y={y + 14} fontSize="12" fill="#0f172a">
+                  <text x={145 + width} y={y + 14} fontSize="12" fill="#e2e8f0">
                     {item.value}
                   </text>
                 </g>
@@ -469,12 +469,12 @@ function Analytics() {
         <h2 className="mb-3 text-lg font-bold text-slate-900">Threat Intelligence Board</h2>
         <div className="mb-4 grid gap-3 sm:grid-cols-2">
           {intelligence.fusionSignals.slice(0, 4).map((signal) => (
-            <div key={`${signal.city}-${signal.label}`} className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm">
-              <p className="font-semibold text-red-700">{signal.label}</p>
-              <p>{signal.city} | Threat Score: {signal.threatScore}</p>
+            <div key={`${signal.city}-${signal.label}`} className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm">
+              <p className="font-semibold text-red-300">{signal.label}</p>
+              <p className="text-[#B6C1D1]">{signal.city} | Threat Score: {signal.threatScore}</p>
             </div>
           ))}
-          {!intelligence.fusionSignals.length ? <p className="text-sm text-slate-600">No correlated fusion threat signals currently.</p> : null}
+          {!intelligence.fusionSignals.length ? <p className="text-sm ui-muted">No correlated fusion threat signals currently.</p> : null}
         </div>
       </article>
       <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

@@ -19,6 +19,7 @@ import { getSampleEvidenceData, seedSampleData } from "./utils/sampleData";
 // Lazy loaded — heavy modules, only load when route opens
 const FaceIntelligence = lazy(() => import("./pages/FaceIntelligence"));
 const PredictionEngine = lazy(() => import("./pages/PredictionEngine"));
+const DemoMode = lazy(() => import("./pages/DemoMode"));
 // Legal RAG placeholder — safe to add here when ready
 // const LegalRAG = lazy(() => import("./pages/LegalRAG"));
 
@@ -134,6 +135,16 @@ function App() {
                 <ErrorBoundary moduleName="Prediction Engine">
                   <Suspense fallback={<ModuleLoader name="Prediction Engine" />}>
                     <PredictionEngine />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/demo"
+              element={
+                <ErrorBoundary moduleName="Demo Mode">
+                  <Suspense fallback={<ModuleLoader name="Demo Mode" />}>
+                    <DemoMode />
                   </Suspense>
                 </ErrorBoundary>
               }

@@ -341,10 +341,10 @@ function EvidenceDetail() {
         <article className="ui-card">
           <h2 className="text-lg font-bold text-[#F2F2F2]">Face Intelligence | چہرہ انٹیلیجنس</h2>
           <p className="mt-3 text-sm text-[#B6C1D1]">
-            Potential match confidence: <span className="font-semibold text-[#F2F2F2]">{faceIntelConfidence}%</span>
+            Spatial metadata confidence: <span className="font-semibold text-[#F2F2F2]">{faceIntelConfidence}%</span>
           </p>
           <p className="mt-2 text-sm text-[#B6C1D1]">
-            Confidence is calculated from image clarity and spatial metadata completeness.
+            Computed from GPS coordinate precision and spatial metadata completeness. Run Face Intelligence module for live suspect correlation.
           </p>
         </article>
       </div>
