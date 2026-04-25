@@ -1,13 +1,95 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#1A202C] text-[#F2F2F2] antialiased;
+    background-image: radial-gradient(circle at 10% 10%, rgba(79, 128, 144, 0.22), transparent 35%),
+      radial-gradient(circle at 90% 0%, rgba(184, 155, 71, 0.14), transparent 35%);
+    min-height: 100vh;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@layer components {
+  .ui-shell {
+    @apply bg-[#1A202C] text-[#F2F2F2];
+  }
+
+  .ui-card {
+    @apply rounded-2xl border border-[#4F8090]/30 bg-[#222B3C]/85 p-5 shadow-xl shadow-black/20;
+  }
+
+  .ui-muted {
+    @apply text-[#B6C1D1];
+  }
+
+  .ui-heading {
+    @apply text-[#F2F2F2];
+  }
+
+  .ui-primary-btn {
+    @apply rounded-lg bg-[#4F8090] px-4 py-2 font-semibold text-[#F2F2F2] transition hover:bg-[#5a95a8];
+  }
+
+  .ui-accent-btn {
+    @apply rounded-lg border border-[#B89B47]/70 px-4 py-2 font-semibold text-[#F2F2F2] transition hover:bg-[#B89B47]/20;
+  }
+}
+
+/* Global dark-theme remap for existing Tailwind utility usage */
+.ui-shell .bg-white {
+  background-color: rgba(34, 43, 60, 0.92) !important;
+}
+
+.ui-shell .border-slate-200,
+.ui-shell .border-slate-300 {
+  border-color: rgba(79, 128, 144, 0.35) !important;
+}
+
+.ui-shell .text-slate-900 {
+  color: #f2f2f2 !important;
+}
+
+.ui-shell .text-slate-800,
+.ui-shell .text-slate-700,
+.ui-shell .text-slate-600,
+.ui-shell .text-slate-500 {
+  color: #b6c1d1 !important;
+}
+
+.ui-shell .bg-slate-50,
+.ui-shell .bg-slate-100 {
+  background-color: rgba(26, 32, 44, 0.72) !important;
+}
+
+/* Accessible form controls for dark UI */
+.ui-shell input,
+.ui-shell select,
+.ui-shell textarea {
+  background-color: #1f2937 !important;
+  color: #f2f2f2 !important;
+  border-color: rgba(79, 128, 144, 0.5) !important;
+}
+
+.ui-shell input::placeholder,
+.ui-shell textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.ui-shell input:focus,
+.ui-shell select:focus,
+.ui-shell textarea:focus {
+  outline: none !important;
+  border-color: #4f8090 !important;
+  box-shadow: 0 0 0 2px rgba(79, 128, 144, 0.28) !important;
+}
+
+.ui-shell select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.ui-shell .text-white {
+  color: #f2f2f2 !important;
 }

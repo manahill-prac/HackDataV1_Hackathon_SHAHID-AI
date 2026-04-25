@@ -1,0 +1,315 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { saveEvidence } from "../utils/evidenceStore";
+
+function deriveRiskLevel(type) {
+  if (type === "violent" || type === "weapons") return "High";
+  if (type === "fraud" || type === "theft") return "Medium";
+  return "Low";
+}
+
+function getGeminiKey() {
+  return process.env.REACT_APP_GEMINI_API_KEY || window.localStorage.getItem("gemini_api_key") || "";
+}
+
+async function hashBufferToHex(buffer) {
+  const digest = await window.crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(new Uint8Array(digest))
+    .map((v) => v.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function CaptureEvidence() {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+
+  const [cameraError, setCameraError] = useState("");
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraLive, setCameraLive] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [captured, setCaptured] = useState(null);
+  const [sealing, setSealing] = useState(false);
+  const [sealed, setSealed] = useState(false);
+  const [incidentType, setIncidentType] = useState("suspicious");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+
+  useEffect(() => {
+    const startCamera = async () => {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError("Camera not supported | کیمرہ سپورٹ دستیاب نہیں");
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        setCameraReady(true);
+        setCameraLive(true);
+      } catch (error) {
+        setCameraError(`Camera access failed | کیمرہ اجازت ناکام: ${error.message}`);
+      }
+    };
+    startCamera();
+    return () => streamRef.current?.getTracks().forEach((t) => t.stop());
+  }, []);
+
+  const collectLocation = () =>
+    new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ coords: null, locationLabel: "GPS unavailable | جی پی ایس دستیاب نہیں" });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude, accuracy } = position.coords;
+          resolve({
+            coords: { latitude, longitude, accuracy },
+            locationLabel: `${latitude.toFixed(6)}, ${longitude.toFixed(6)} (±${Math.round(accuracy)}m)`,
+          });
+        },
+        () => resolve({ coords: null, locationLabel: "Location permission denied | مقام اجازت مسترد" }),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+
+  const capturePhoto = async () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    setAiError("");
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+    const buffer = await (await fetch(dataUrl)).arrayBuffer();
+    const hash = await hashBufferToHex(buffer);
+    const meta = await collectLocation();
+    setCaptured({
+      id: crypto.randomUUID(),
+      mediaType: "photo",
+      photoDataUrl: dataUrl,
+      videoUrl: "",
+      hash,
+      timestamp: new Date().toISOString(),
+      ...meta,
+      incidentType,
+      titleEn: "Field Photo Evidence",
+      titleUr: "فیلڈ تصویری ثبوت",
+    });
+    setSealed(false);
+  };
+
+  const toggleRecord = async () => {
+    setAiError("");
+    if (!streamRef.current) return;
+    if (recording) {
+      mediaRecorderRef.current?.stop();
+      setRecording(false);
+      return;
+    }
+    try {
+      const recorder = new MediaRecorder(streamRef.current, { mimeType: "video/webm" });
+      chunksRef.current = [];
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: "video/webm" });
+        const hash = await hashBufferToHex(await blob.arrayBuffer());
+        const videoUrl = URL.createObjectURL(blob);
+        const meta = await collectLocation();
+        setCaptured({
+          id: crypto.randomUUID(),
+          mediaType: "video",
+          photoDataUrl: "",
+          videoBlob: blob,
+          videoUrl,
+          hash,
+          timestamp: new Date().toISOString(),
+          ...meta,
+          incidentType,
+          titleEn: "Field Video Evidence",
+          titleUr: "فیلڈ ویڈیو ثبوت",
+        });
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+    } catch (error) {
+      setAiError(`Recording failed | ریکارڈنگ ناکام: ${error.message}`);
+    }
+  };
+
+  const sealEvidence = async () => {
+    if (!captured) return;
+    const key = getGeminiKey();
+    if (!key) {
+      setAiError("Gemini API key missing. Set REACT_APP_GEMINI_API_KEY or localStorage 'gemini_api_key'.");
+      return;
+    }
+    setSealing(true);
+    setAiLoading(true);
+    setAiError("");
+    const sealedAt = new Date().toISOString();
+    const riskLevel = deriveRiskLevel(captured.incidentType);
+    const status = riskLevel === "High" ? "Flagged" : "Verified";
+
+    try {
+      const prompt = `You are a Pakistani legal forensic AI assistant. Analyze this crime scene evidence strictly as JSON only, no other text. Incident: ${captured.incidentType}. Location: ${captured.locationLabel}. Time: ${captured.timestamp}. Respond ONLY with this exact JSON structure: {"statement_en":"neutral 3-sentence legal witness statement in English","statement_ur":"same statement in Urdu language","ppc_sections":[{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"}],"case_score":75,"risk_assessment":"2 sentence risk analysis","recommended_action":"specific next steps for victim"}`;
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: prompt }],
+              },
+            ],
+          }),
+        }
+      );
+      const geminiData = await geminiResponse.json();
+      const aiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      const aiResult = JSON.parse(aiText.replace(/```json|```/g, "").trim());
+
+      saveEvidence({
+        ...captured,
+        status,
+        riskLevel,
+        sealed: true,
+        sealedAt,
+        firGenerated: status === "Flagged",
+        aiAnalysis: aiResult,
+        custodyTimeline: [
+          { label: "Captured", labelUr: "ثبوت ریکارڈ کیا گیا", at: captured.timestamp },
+          { label: "Hashed (SHA-256)", labelUr: "ہیش تیار ہوا", at: captured.timestamp },
+          { label: "AI Analysis Completed", labelUr: "اے آئی تجزیہ مکمل", at: new Date().toISOString() },
+          { label: "Sealed", labelUr: "ثبوت سیل کیا گیا", at: sealedAt },
+        ],
+      });
+      setSealed(true);
+      window.alert("Evidence sealed & AI analysis complete");
+    } catch (error) {
+      setAiError(`Gemini processing failed | اے آئی تجزیہ ناکام: ${error.message}`);
+    } finally {
+      setAiLoading(false);
+      setSealing(false);
+    }
+  };
+
+  const capturedAt = useMemo(
+    () => (captured ? new Date(captured.timestamp).toLocaleString("en-PK", { hour12: false }) : ""),
+    [captured]
+  );
+
+  return (
+    <section className="space-y-5">
+      <header className="rounded-2xl bg-gradient-to-r from-[#1A56DB] to-blue-800 p-6 text-white shadow-lg">
+        <h1 className="text-2xl font-black">Capture Evidence | ثبوت ریکارڈ کریں</h1>
+      </header>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <label className="mb-3 block text-sm font-semibold text-slate-700">
+            Incident Type | واقعہ کی قسم
+            <select
+              className="mt-2 w-full rounded-lg border border-slate-300 p-2 text-sm"
+              value={incidentType}
+              onChange={(e) => setIncidentType(e.target.value)}
+            >
+              <option value="suspicious">Suspicious | مشکوک</option>
+              <option value="theft">Theft | چوری</option>
+              <option value="fraud">Fraud | فراڈ</option>
+              <option value="violent">Violent | پرتشدد</option>
+              <option value="weapons">Weapons | اسلحہ</option>
+            </select>
+          </label>
+          <div className="overflow-hidden rounded-xl bg-slate-900">
+            <video ref={videoRef} autoPlay playsInline muted className="h-[320px] w-full object-cover" />
+          </div>
+          <canvas ref={canvasRef} className="hidden" />
+          <div className="mt-2 flex items-center gap-2 text-sm text-slate-700">
+            <span className={`h-2.5 w-2.5 rounded-full ${cameraLive ? "bg-emerald-500" : "bg-slate-400"}`} />
+            {cameraLive ? "Live | لائیو" : "Offline | آف لائن"}
+          </div>
+          {cameraError ? <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{cameraError}</p> : null}
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={capturePhoto}
+              disabled={!cameraReady}
+              className="rounded-lg bg-[#1A56DB] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              Capture Photo | تصویر
+            </button>
+            {!recording ? (
+              <button type="button" onClick={toggleRecord} disabled={!cameraReady} className="rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-white">
+                Start Recording | ریکارڈنگ شروع
+              </button>
+            ) : (
+              <button type="button" onClick={toggleRecord} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white">
+                Stop Recording | ریکارڈنگ بند
+              </button>
+            )}
+          </div>
+        </article>
+
+        <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900">Captured Evidence | محفوظ شدہ ثبوت</h2>
+          {!captured ? (
+            <p className="mt-3 text-sm text-slate-600">Capture image/video first | پہلے ثبوت محفوظ کریں</p>
+          ) : (
+            <>
+              {captured.mediaType === "photo" ? (
+                <img src={captured.photoDataUrl} alt="Captured evidence" className="mt-3 h-52 w-full rounded-lg object-cover" />
+              ) : (
+                <video controls src={captured.videoUrl} className="mt-3 h-52 w-full rounded-lg object-cover" />
+              )}
+              <div className="mt-3 space-y-2 text-sm">
+                <p className="break-all text-slate-700">
+                  <span className="font-semibold">SHA-256:</span> {captured.hash}
+                </p>
+                <p className="text-slate-700">
+                  <span className="font-semibold">GPS:</span> {captured.locationLabel}
+                </p>
+                <p className="text-slate-700">
+                  <span className="font-semibold">Timestamp:</span> {capturedAt}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={sealEvidence}
+                disabled={sealing}
+                className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {sealing ? "Sealing..." : "Seal Evidence | ثبوت سیل کریں"}
+              </button>
+              {aiLoading ? (
+                <div className="mt-2 flex items-center gap-2 text-sm text-[#1A56DB]">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#1A56DB] border-t-transparent" />
+                  SHAHID.AI is analyzing evidence... | شاہد اے آئی ثبوت کا تجزیہ کر رہا ہے
+                </div>
+              ) : null}
+              {aiError ? <p className="mt-2 rounded-lg bg-red-50 p-2 text-sm text-red-700">{aiError}</p> : null}
+            </>
+          )}
+        </article>
+      </div>
+      {sealed && captured ? (
+        <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+          <h3 className="text-lg font-bold text-emerald-800">Evidence Sealed | ثبوت سیل</h3>
+          <p className="text-sm text-slate-700">Evidence ID: {captured.id}</p>
+        </section>
+      ) : null}
+    </section>
+  );
+}
+
+export default CaptureEvidence;
