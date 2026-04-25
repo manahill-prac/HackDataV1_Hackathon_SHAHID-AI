@@ -1,75 +1,228 @@
-<<<<<<< HEAD
-# Getting Started with Create React App
+# SHAHID.AI ⚖️🛡️
+## Turning Digital Evidence into Actionable Justice  
+### شاہد — *The Witness*
+**HACKDATA V1 | AI & Data Science Hackathon**  
+**GDGoC × GitHub | COMSATS University Islamabad, Wah Campus**  
+**Team Name: Oscura**  
+**Team Lead: Manahil Mirza**
+---
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Problem Statement
 
-## Available Scripts
+Digital evidence is often captured…
 
-In the project directory, you can run:
+…but rarely trusted.
 
-### `npm start`
+Victims struggle to preserve evidence properly.  
+Metadata is lost.  
+Evidence can be altered.  
+Legal processes are inaccessible.  
+Investigators lack intelligence support.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+**SHAHID.AI addresses the justice gap by transforming ordinary digital evidence into trusted, structured, actionable justice intelligence.**
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+# What is SHAHID.AI?
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+SHAHID.AI is an AI-powered **crime evidence intelligence platform** that moves evidence through a complete pipeline:
 
-### `npm run build`
+**Capture → Integrity → Intelligence → Legal Readiness**
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+From a phone camera to a court-ready evidence package.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Core Features
 
-### `npm run eject`
+## Evidence Integrity
+- SHA-256 Evidence Sealing
+- GPS + Timestamp Metadata
+- Tamper-Evident Chain of Custody
+- Public Evidence Hash Verification
+- Integrity Audit Tracking
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## AI Intelligence
+- AI Witness Statement Generation (Urdu + English)
+- Risk Assessment & Recommended Actions
+- Face Intelligence (repeat suspect correlation)
+- Crime Prediction ML
+- Threat Correlation Index
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Legal Intelligence
+- Grounded Legal RAG (PPC + CrPC + Evidence Law)
+- Similarity Scored Citation Retrieval
+- Explainable “Why These Laws?” Matching
+- FIR Draft Generation
+- Court Submission Packet Generation
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Threat Intelligence Command Center
+- Emerging hotspot warnings
+- Crime surge prediction
+- Fusion threat signals
+- Case readiness scoring
+- Intelligence watchlists
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Additional Modules
+- CCTV Intelligence Portal
+- Voice Evidence Recording
+- Emergency Panic Button
+- Guided Demo Mode for Judges
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# 5-Layer AI Fusion Architecture
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+SHAHID.AI combines five intelligence layers:
 
-### Code Splitting
+1. Input Layer  
+Evidence capture, uploads, CCTV, voice
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+2. Integrity Layer  
+Hashing, verification, custody chain
 
-### Analyzing the Bundle Size
+3. AI Intelligence Layer  
+Witness AI, legal retrieval, face intelligence
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+4. Threat Fusion Layer  
+Prediction ML, anomalies, threat correlation
 
-### Making a Progressive Web App
+5. Legal Output Layer  
+FIR drafting, court packet, case readiness
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+---
 
-### Advanced Configuration
+# AI Integrations Used
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+This project integrates multiple AI systems:
 
-### Deployment
+- Gemini for structured witness intelligence  
+- Hybrid BM25 + TF-IDF Legal RAG  
+- Face descriptor intelligence using Face-API  
+- Browser-based crime prediction ML  
+- Threat Correlation Index scoring  
+- Case readiness intelligence engine
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+**No hallucinated legal citations. Grounded retrieval only.**
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-=======
-# HackDataV1_Hackathon_SHAHID-AI
-Pakistan's First AI Crime Intelligence &amp; Evidence Platform
->>>>>>> 6331caf4e98c441a95fa87b3ca02a8edb1f9c6b9
+# Innovation Highlights
+
+### Grounded Legal Intelligence
+Evidence-linked legal retrieval over Pakistani law.
+
+### Court-Ready Evidence Pipeline
+Not just reporting — legal package generation.
+
+### Threat Fusion Intelligence
+Combines anomaly, hotspot and suspect signals.
+
+### Zero-Cost Intelligence Stack
+Built using free/open-source technologies.
+
+---
+
+# Tech Stack
+
+| Layer | Stack |
+|------|------|
+| Frontend | React.js + Tailwind |
+| AI Witness | Google Gemini |
+| Legal Retrieval | Hybrid Local RAG |
+| Face Intelligence | face-api.js |
+| ML Prediction | Browser-based ML |
+| Security | Web Crypto APIs |
+| Deployment | Vercel |
+
+---
+
+# Demo Flow (5 Minutes)
+
+1. Capture & Seal Evidence  
+2. Generate AI Witness Statement  
+3. Retrieve Grounded Laws  
+4. Generate Court Submission Packet  
+5. Show Threat Command Center  
+6. Demonstrate Prediction Engine  
+7. Show Face Intelligence Correlation  
+8. Case Package Ready
+
+**Street Evidence → Court-Ready Intelligence in under 60 seconds**
+
+---
+
+# Run Locally
+
+```bash
+git clone https://github.com/manahill-prac/HackDataV1_Hackathon_SHAHID-AI.git
+cd HackDataV1_Hackathon_SHAHID-AI
+npm install
+npm start
+```
+
+If using AI witness generation:
+
+Create:
+
+```env
+.env
+REACT_APP_GEMINI_API_KEY=your_key_here
+```
+
+---
+
+# Project Modules
+
+```text
+src/
+ ├── pages/
+ │   ├── CaptureEvidence
+ │   ├── EvidenceDetail
+ │   ├── Analytics
+ │   ├── PredictionEngine
+ │   ├── FaceIntelligence
+ │   └── DemoMode
+ ├── utils/
+ │   ├── ragEngine
+ │   ├── firDraftEngine
+ │   ├── threatFusion
+ │   └── legalPdfGenerator
+```
+
+---
+
+# Impact
+
+Designed for:
+
+- Citizens  
+- Investigators  
+- Lawyers  
+- Courts  
+- Public Safety Agencies
+
+Potential applications:
+
+- Evidence preservation  
+- Investigation support  
+- Legal aid workflows  
+- Digital justice infrastructure
+
+---
+
+# Live Demo
+🔗 Add deployed demo link here
+
+---
+
+# Team Oscura
+Built for **HACKDATA V1**  
+
+---
+
+## Closing Statement
+
+**Preserving Truth. Delivering Justice. Powered by AI.**
+
+SHAHID.AI ⚖️
