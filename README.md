@@ -155,6 +155,91 @@ S3 --- D1
 S4 --- C3
 ```
 
+# System Design Architecture
+
+```mermaid
+flowchart TD
+
+U1[Citizen User]
+U2[Investigator]
+U3[Lawyer or Court]
+
+U1 --> FE
+U2 --> FE
+U3 --> FE
+
+subgraph Frontend["Frontend Layer - React SPA"]
+FE[SHAHID.AI Web Application]
+M1[Capture Evidence]
+M2[Analytics Dashboard]
+M3[Prediction Engine]
+M4[Face Intelligence]
+M5[Verification Module]
+end
+
+FE --> M1
+FE --> M2
+FE --> M3
+FE --> M4
+FE --> M5
+
+FE --> APP
+
+subgraph APP["Application Logic Layer"]
+A1[Evidence Processing Engine]
+A2[Legal RAG Engine]
+A3[FIR Draft Generator]
+A4[Threat Fusion Engine]
+A5[Court Packet Generator]
+end
+
+APP --> AI
+
+subgraph AI["AI Intelligence Layer"]
+G1[Gemini Witness AI]
+G2[Predictive ML Model]
+G3[Face Correlation Engine]
+G4[Threat Correlation Index]
+end
+
+APP --> DATA
+
+subgraph DATA["Data and Storage Layer"]
+D1[(Evidence Store)]
+D2[(IndexedDB and Local Storage)]
+D3[(Legal Corpus)]
+D4[(Hash Ledger)]
+D5[(Face Model Files)]
+end
+
+APP --> SEC
+
+subgraph SEC["Security Layer"]
+S1[SHA256 Hashing]
+S2[Chain of Custody]
+S3[Evidence Verification]
+S4[Access Control]
+end
+
+APP --> OUT
+
+subgraph OUT["Output Layer"]
+O1[FIR Draft]
+O2[Court Submission Packet]
+O3[Threat Dashboard]
+O4[Risk Alerts]
+end
+
+G1 --> A1
+G2 --> A4
+G3 --> A4
+G4 --> O3
+
+D1 --> A1
+D3 --> A2
+D4 --> S2
+```
+
 
 
 # 5-Layer AI Fusion Architecture
