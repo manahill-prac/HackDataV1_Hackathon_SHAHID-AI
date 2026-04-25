@@ -69,51 +69,49 @@ From a phone camera to a court-ready evidence package.
 - Emergency Panic Button
 - Guided Demo Mode for Judges
 
----
-
 # System Design Architecture
 
 ```mermaid
 flowchart TD
 
-U[Users<br/>Citizens | Investigators | Lawyers | Courts]
+U[Users: Citizens, Investigators, Lawyers, Courts]
 
-subgraph L1["Layer 1 — Evidence Capture"]
-A1[Photo / Video Upload]
+subgraph L1[Layer 1 - Evidence Capture]
+A1[Photo and Video Upload]
 A2[CCTV Evidence]
 A3[Voice Evidence]
-A4[Metadata Capture<br/>GPS + Timestamp]
+A4[GPS and Timestamp Metadata]
 end
 
-subgraph L2["Layer 2 — Integrity & Security"]
-B1[SHA-256 Evidence Hashing]
-B2[Chain of Custody Log]
+subgraph L2[Layer 2 - Integrity Security]
+B1[SHA256 Hashing]
+B2[Chain of Custody]
 B3[Evidence Verification]
 B4[Integrity Audit Trail]
 end
 
-subgraph L3["Layer 3 — AI Intelligence"]
+subgraph L3[Layer 3 - AI Intelligence]
 C1[AI Witness Generation]
 C2[Face Intelligence]
 C3[Crime Prediction ML]
 C4[Threat Correlation Index]
 end
 
-subgraph L4["Layer 4 — Legal Intelligence"]
+subgraph L4[Layer 4 - Legal Intelligence]
 D1[Legal RAG Engine]
-D2[PPC / CrPC / QSO Retrieval]
+D2[PPC CrPC QSO Retrieval]
 D3[FIR Draft Generation]
 D4[Court Submission Packet]
 end
 
-subgraph L5["Layer 5 — Decision Support"]
+subgraph L5[Layer 5 - Decision Support]
 E1[Threat Command Center]
-E2[Case Readiness Scoring]
+E2[Case Readiness]
 E3[Investigation Support]
 E4[Public Verification]
 end
 
-subgraph Storage["Data & Support Layer"]
+subgraph Storage[Support Layer]
 S1[(Evidence Store)]
 S2[(Hash Ledger)]
 S3[(Legal Corpus)]
@@ -136,6 +134,7 @@ B3 --> B4
 B4 --> C1
 B4 --> C2
 B4 --> C3
+
 C1 --> C4
 C2 --> C4
 C3 --> C4
@@ -155,7 +154,6 @@ S2 --- B1
 S3 --- D1
 S4 --- C3
 ```
-
 
 
 
