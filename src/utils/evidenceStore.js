@@ -54,3 +54,46 @@ export function findEvidenceByHash(hash) {
   const normalized = hash.trim().toLowerCase();
   return getEvidenceList().find((item) => (item.hash || "").toLowerCase() === normalized) || null;
 }
+
+/**
+ * Append a tamper-evident custody event.
+ * chainHash = SHA-256(previousHash + eventPayload) — computed async.
+ * Falls back to a deterministic pseudo-hash if SubtleCrypto unavailable.
+ */
+export async function appendCustodyEvent(evidenceId, event) {
+  const items = getEvidenceList();
+  const entry = items.find((item) => item.id === evidenceId);
+  if (!entry) return;
+
+  const timeline = Array.isArray(entry.custodyTimeline) ? entry.custodyTimeline : [];
+  const previousHash = timeline.length
+    ? (timeline[timeline.length - 1].chainHash || entry.hash || "")
+    : (entry.hash || "");
+
+  const payload = JSON.stringify({ event: event.label, at: event.at, id: evidenceId });
+  let chainHash = "";
+  try {
+    const buf = await window.crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(previousHash + payload)
+    );
+    chainHash = Array.from(new Uint8Array(buf))
+      .map((v) => v.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    // Fallback: deterministic pseudo-hash (no SubtleCrypto)
+    let h = 0;
+    const str = previousHash + payload;
+    for (let i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
+    chainHash = Math.abs(h).toString(16).padEnd(64, "0").slice(0, 64);
+  }
+
+  const newEvent = { ...event, chainHash, signatureType: "SHA256-chain" };
+  const updated = items.map((item) =>
+    item.id === evidenceId
+      ? { ...item, custodyTimeline: [...timeline, newEvent] }
+      : item
+  );
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  return chainHash;
+}

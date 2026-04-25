@@ -1,0 +1,252 @@
+[
+  {
+    "id": "ppc-379",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 379",
+    "title": "Theft",
+    "full_text": "Whoever, intending to take dishonestly any moveable property out of the possession of any person without that person's consent, moves that property in order to such taking, is said to commit theft.",
+    "explanation": "Theft requires dishonest intention, moveable property, removal from possession without consent. Applies to pickpocketing, shoplifting, vehicle theft, mobile snatching.",
+    "offense_tags": ["theft", "property", "moveable", "dishonest", "snatching"],
+    "keywords": ["theft", "steal", "stolen", "moveable", "property", "dishonest", "possession", "consent", "snatching", "pickpocket", "mobile", "vehicle", "took", "take"]
+  },
+  {
+    "id": "ppc-380",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 380",
+    "title": "Theft in Dwelling House",
+    "full_text": "Whoever commits theft in any building, tent or vessel, which building, tent or vessel is used as a human dwelling, or used for the custody of property, shall be punished with imprisonment of either description for a term which may extend to seven years, and shall also be liable to fine.",
+    "explanation": "Aggravated theft when committed inside a residence, tent, or vessel used as dwelling or for property custody. Carries higher penalty than simple theft.",
+    "offense_tags": ["theft", "burglary", "dwelling", "house", "break-in"],
+    "keywords": ["theft", "house", "dwelling", "building", "burglary", "break", "enter", "home", "residence", "vessel", "tent", "custody", "property"]
+  },
+  {
+    "id": "ppc-382",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 382",
+    "title": "Theft after Preparation for Causing Death or Hurt",
+    "full_text": "Whoever commits theft, having made preparation for causing death, or hurt, or restraint, or fear of death, or of hurt, or of restraint, to any person, in order to the committing of such theft, or in order to the effecting of his escape after the committing of such theft, or in order to the retaining of property taken by such theft, shall be punished with rigorous imprisonment for a term which may extend to ten years, and shall also be liable to fine.",
+    "explanation": "Theft accompanied by preparation to cause death, hurt or restraint. Applies to armed robbery scenarios where weapon is prepared before theft.",
+    "offense_tags": ["theft", "robbery", "armed", "weapon", "hurt", "death"],
+    "keywords": ["theft", "armed", "weapon", "hurt", "death", "restraint", "fear", "escape", "robbery", "prepared", "gun", "knife"]
+  },
+  {
+    "id": "ppc-390",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 390",
+    "title": "Robbery",
+    "full_text": "In all robbery there is either theft or extortion. Theft is robbery if, in order to the committing of the theft, or in committing the theft, or in carrying away or attempting to carry away property obtained by the theft, the offender, for that end, voluntarily causes or attempts to cause to any person death or hurt or wrongful restraint, or fear of instant death or of instant hurt, or of instant wrongful restraint.",
+    "explanation": "Robbery is theft combined with force, threat, or causing hurt. Applies when property is taken using violence or threat of immediate harm.",
+    "offense_tags": ["robbery", "theft", "force", "violence", "threat", "hurt"],
+    "keywords": ["robbery", "rob", "robbed", "force", "violence", "threat", "hurt", "death", "restraint", "fear", "instant", "snatched", "armed", "gun", "knife", "weapon"]
+  },
+  {
+    "id": "ppc-392",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 392",
+    "title": "Punishment for Robbery",
+    "full_text": "Whoever commits robbery shall be punished with rigorous imprisonment for a term which may extend to ten years, and shall also be liable to fine; and, if the robbery be committed on the highway between sunset and sunrise, the imprisonment may be extended to fourteen years.",
+    "explanation": "Punishment provision for robbery. Highway robbery at night carries enhanced penalty up to 14 years.",
+    "offense_tags": ["robbery", "punishment", "highway", "night"],
+    "keywords": ["robbery", "punishment", "highway", "night", "sunset", "sunrise", "rigorous", "imprisonment", "fine"]
+  },
+  {
+    "id": "ppc-302",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 302",
+    "title": "Punishment of Qatl-i-Amd (Intentional Murder)",
+    "full_text": "Whoever commits qatl-i-amd shall, subject to the provisions of this Chapter be: (a) punished with death as qisas; (b) punished with death or imprisonment for life as ta'zir having regard to the facts and circumstances of the case, if the proof in either of the forms specified in section 304 is not available.",
+    "explanation": "Intentional murder. Applies when death is caused with intent. Punishment is death (qisas) or life imprisonment (ta'zir).",
+    "offense_tags": ["murder", "homicide", "death", "intentional", "qatl", "violent"],
+    "keywords": ["murder", "kill", "killed", "death", "homicide", "intentional", "qatl", "amd", "violent", "dead", "body", "victim", "shot", "stabbed"]
+  },
+  {
+    "id": "ppc-324",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 324",
+    "title": "Attempt to Commit Qatl-i-Amd",
+    "full_text": "Whoever does any act with such intention or knowledge, and under such circumstances that, if he by that act caused death, he would be guilty of qatl-i-amd, shall be punished with imprisonment of either description for a term which may extend to ten years, and shall also be liable to fine, and, if hurt is caused to any person by such act, the offender shall, in addition to the imprisonment, be liable to the punishment provided for the hurt caused.",
+    "explanation": "Attempted murder. Applies when act is done with intent to kill but death does not result. Carries up to 10 years imprisonment.",
+    "offense_tags": ["attempted murder", "assault", "violent", "hurt", "weapon"],
+    "keywords": ["attempt", "murder", "kill", "shot", "stabbed", "attack", "assault", "hurt", "injury", "weapon", "gun", "knife", "violent", "intention"]
+  },
+  {
+    "id": "ppc-337",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 337-A",
+    "title": "Itlaf-i-Udw (Causing Hurt Resulting in Loss of Limb)",
+    "full_text": "Whoever by doing an act with the intention of causing hurt to any person, or with the knowledge that he is likely to cause hurt to any person, causes the itlaf of a limb or organ of the body of any person, shall be said to cause itlaf-i-udw.",
+    "explanation": "Causing hurt resulting in loss or permanent damage to a limb or organ. Applies to serious physical assault cases.",
+    "offense_tags": ["assault", "hurt", "injury", "limb", "violent"],
+    "keywords": ["hurt", "injury", "limb", "organ", "assault", "beat", "attack", "wound", "damage", "permanent", "disability"]
+  },
+  {
+    "id": "ppc-354",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 354",
+    "title": "Assault or Criminal Force to Woman with Intent to Outrage Her Modesty",
+    "full_text": "Whoever assaults or uses criminal force to any woman, intending to outrage or knowing it to be likely that he will thereby outrage her modesty, shall be punished with imprisonment of either description for a term which may extend to two years, or with fine, or with both.",
+    "explanation": "Assault or criminal force against a woman with intent to outrage modesty. Applies to harassment, molestation, and physical assault on women.",
+    "offense_tags": ["harassment", "assault", "woman", "modesty", "force"],
+    "keywords": ["assault", "woman", "modesty", "outrage", "harass", "harassment", "force", "touch", "molestation", "female", "girl", "lady"]
+  },
+  {
+    "id": "ppc-354a",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 354-A",
+    "title": "Assault or Use of Criminal Force with Intent to Disrobe",
+    "full_text": "Whoever assaults or uses criminal force to any woman or uses any other means with the intention to disrobe or compel her to be naked in any public place, shall be punished with imprisonment of either description which may extend to seven years and shall also be liable to fine.",
+    "explanation": "Aggravated form of assault on women involving intent to disrobe. Carries up to 7 years imprisonment.",
+    "offense_tags": ["harassment", "assault", "woman", "disrobe", "public"],
+    "keywords": ["disrobe", "naked", "public", "assault", "woman", "force", "compel", "strip", "harassment"]
+  },
+  {
+    "id": "ppc-506",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 506",
+    "title": "Punishment for Criminal Intimidation",
+    "full_text": "Whoever commits the offence of criminal intimidation shall be punished with imprisonment of either description for a term which may extend to two years, or with fine, or with both; and if the threat be to cause death or grievous hurt, or to cause the destruction of any property by fire, or to cause an offence punishable with death or imprisonment for life, or with imprisonment for a term which may extend to seven years, or to impute unchastity to a woman, shall be punished with imprisonment of either description for a term which may extend to seven years, or with fine, or with both.",
+    "explanation": "Criminal intimidation — threatening a person to cause alarm or compel action. Applies to threats, blackmail, and coercion.",
+    "offense_tags": ["threat", "intimidation", "blackmail", "coercion", "harassment"],
+    "keywords": ["threat", "threaten", "intimidate", "blackmail", "coerce", "fear", "alarm", "compel", "death threat", "warning", "message", "call"]
+  },
+  {
+    "id": "ppc-420",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 420",
+    "title": "Cheating and Dishonestly Inducing Delivery of Property",
+    "full_text": "Whoever cheats and thereby dishonestly induces the person deceived to deliver any property to any person, or to make, alter or destroy the whole or any part of a valuable security, or anything which is signed or sealed, and which is capable of being converted into a valuable security, shall be punished with imprisonment of either description for a term which may extend to seven years, and shall also be liable to fine.",
+    "explanation": "Fraud by deception inducing delivery of property. Applies to scams, online fraud, false pretenses, and financial deception.",
+    "offense_tags": ["fraud", "cheating", "deception", "property", "financial"],
+    "keywords": ["fraud", "cheat", "deceive", "deception", "scam", "false", "pretense", "money", "property", "deliver", "induce", "dishonest", "online", "fake"]
+  },
+  {
+    "id": "ppc-468",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 468",
+    "title": "Forgery for Purpose of Cheating",
+    "full_text": "Whoever commits forgery, intending that the document or electronic record forged shall be used for the purpose of cheating, shall be punished with imprisonment of either description for a term which may extend to seven years, and shall also be liable to fine.",
+    "explanation": "Forgery of documents or electronic records for the purpose of cheating. Applies to fake documents, forged signatures, and digital forgery.",
+    "offense_tags": ["forgery", "fraud", "document", "electronic", "cheating"],
+    "keywords": ["forgery", "forged", "fake", "document", "signature", "electronic", "record", "cheat", "false", "counterfeit", "fabricate"]
+  },
+  {
+    "id": "ppc-471",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 471",
+    "title": "Using as Genuine a Forged Document",
+    "full_text": "Whoever fraudulently or dishonestly uses as genuine any document or electronic record which he knows or has reason to believe to be a forged document or electronic record, shall be punished in the same manner as if he had forged such document or electronic record.",
+    "explanation": "Using a forged document knowing it to be forged. Applies to presenting fake IDs, forged certificates, or fabricated evidence.",
+    "offense_tags": ["forgery", "fraud", "document", "electronic", "evidence tampering"],
+    "keywords": ["forged", "fake", "document", "use", "genuine", "fraudulent", "dishonest", "electronic", "record", "certificate", "ID", "present"]
+  },
+  {
+    "id": "ppc-109",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 109",
+    "title": "Punishment of Abetment if the Act Abetted is Committed",
+    "full_text": "Whoever abets any offence shall, if the act abetted is committed in consequence of the abetment, and no express provision is made by this Code for the punishment of such abetment, be punished with the punishment provided for the offence.",
+    "explanation": "Abetment — aiding, instigating, or conspiring in commission of an offence. Applies to accomplices, facilitators, and co-conspirators.",
+    "offense_tags": ["abetment", "conspiracy", "accomplice", "aid", "facilitate"],
+    "keywords": ["abet", "abetment", "aid", "assist", "conspire", "conspiracy", "accomplice", "facilitate", "instigate", "help", "support", "partner"]
+  },
+  {
+    "id": "ppc-34",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 34",
+    "title": "Acts Done by Several Persons in Furtherance of Common Intention",
+    "full_text": "When a criminal act is done by several persons in furtherance of the common intention of all, each of such persons is liable for that act in the same manner as if it were done by him alone.",
+    "explanation": "Joint criminal liability when multiple persons share common intention. Applies to gang crimes, group assaults, and organized criminal activity.",
+    "offense_tags": ["common intention", "joint liability", "gang", "group", "conspiracy"],
+    "keywords": ["common intention", "joint", "several", "persons", "group", "gang", "together", "collectively", "shared", "furtherance"]
+  },
+  {
+    "id": "ppc-148",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 148",
+    "title": "Rioting Armed with Deadly Weapon",
+    "full_text": "Whoever is guilty of rioting, being armed with a deadly weapon or with anything which, used as a weapon of offence, is likely to cause death, shall be punished with imprisonment of either description for a term which may extend to three years, or with fine, or with both.",
+    "explanation": "Rioting while armed with deadly weapon. Applies to armed mob violence, gang confrontations with weapons.",
+    "offense_tags": ["rioting", "armed", "weapon", "mob", "violence"],
+    "keywords": ["riot", "rioting", "armed", "weapon", "deadly", "mob", "group", "violence", "gun", "knife", "lathi", "crowd"]
+  },
+  {
+    "id": "ppc-441",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 441",
+    "title": "Criminal Trespass",
+    "full_text": "Whoever enters into or upon property in the possession of another with intent to commit an offence or to intimidate, insult or annoy any person in possession of such property, or having lawfully entered into or upon such property, unlawfully remains there with intent thereby to intimidate, insult or annoy any person, or with intent to commit an offence, is said to commit criminal trespass.",
+    "explanation": "Unlawful entry onto property with criminal intent. Applies to break-ins, stalking on premises, and unlawful occupation.",
+    "offense_tags": ["trespass", "entry", "property", "unlawful", "stalking"],
+    "keywords": ["trespass", "enter", "entry", "property", "unlawful", "remain", "intimidate", "annoy", "insult", "break in", "premises"]
+  },
+  {
+    "id": "ppc-509",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 509",
+    "title": "Word, Gesture or Act Intended to Insult the Modesty of a Woman",
+    "full_text": "Whoever, intending to insult the modesty of any woman, utters any word, makes any sound or gesture, or exhibits any object, intending that such word or sound shall be heard, or that such gesture or object shall be seen, by such woman, or intrudes upon the privacy of such woman, shall be punished with simple imprisonment for a term which may extend to one year, or with fine, or with both.",
+    "explanation": "Street harassment, verbal abuse, obscene gestures directed at women. Applies to catcalling, stalking, and privacy intrusion.",
+    "offense_tags": ["harassment", "woman", "modesty", "gesture", "verbal", "stalking"],
+    "keywords": ["harass", "harassment", "woman", "modesty", "insult", "word", "gesture", "sound", "privacy", "stalk", "catcall", "verbal", "abuse", "female"]
+  },
+  {
+    "id": "ppc-evidence-tampering",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 201",
+    "title": "Causing Disappearance of Evidence of Offence",
+    "full_text": "Whoever, knowing or having reason to believe that an offence has been committed, causes any evidence of the commission of that offence to disappear, with the intention of screening the offender from legal punishment, or with that intention gives any information respecting the offence which he knows or believes to be false, shall be punished with imprisonment of either description for a term which may extend to seven years, and shall also be liable to fine.",
+    "explanation": "Destruction, concealment, or falsification of evidence. Applies to tampering with crime scene, destroying digital evidence, or giving false information.",
+    "offense_tags": ["evidence tampering", "obstruction", "concealment", "false information"],
+    "keywords": ["evidence", "tamper", "tampering", "destroy", "disappear", "conceal", "hide", "false", "information", "screen", "offender", "obstruct", "delete", "remove"]
+  },
+  {
+    "id": "ppc-193",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 193",
+    "title": "Punishment for False Evidence",
+    "full_text": "Whoever intentionally gives false evidence in any stage of a judicial proceeding, or fabricates false evidence for the purpose of being used in any stage of a judicial proceeding, shall be punished with imprisonment of either description for a term which may extend to seven years, and shall also be liable to fine.",
+    "explanation": "Giving false testimony or fabricating evidence in judicial proceedings. Applies to perjury, false witness statements, and fabricated forensic evidence.",
+    "offense_tags": ["false evidence", "perjury", "fabrication", "judicial", "evidence tampering"],
+    "keywords": ["false", "evidence", "fabricate", "perjury", "testimony", "witness", "judicial", "proceeding", "court", "statement", "lie", "fake"]
+  },
+  {
+    "id": "ppc-cybercrime-1",
+    "act": "Prevention of Electronic Crimes Act 2016",
+    "section": "PECA 2016 S.3",
+    "title": "Unauthorized Access to Information System",
+    "full_text": "Whoever intentionally gains unauthorized access to the whole or any part of an information system shall be punished with imprisonment for a term which may extend to three months or with fine which may extend to fifty thousand rupees or with both.",
+    "explanation": "Unauthorized access to computer systems, networks, or digital devices. Applies to hacking, unauthorized login, and system intrusion.",
+    "offense_tags": ["cybercrime", "hacking", "unauthorized access", "digital", "computer"],
+    "keywords": ["hack", "hacking", "unauthorized", "access", "computer", "system", "network", "digital", "login", "intrusion", "cyber", "online", "account", "password"]
+  },
+  {
+    "id": "ppc-cybercrime-2",
+    "act": "Prevention of Electronic Crimes Act 2016",
+    "section": "PECA 2016 S.9",
+    "title": "Cyber Stalking",
+    "full_text": "A person commits the offence of cyber stalking who, with the intent to coerce, intimidate, or harass any person, uses information system, information system network, the Internet, website, electronic mail or any other similar means of communication to follow a person, contact or attempt to contact a person to foster personal interaction repeatedly despite a clear indication of a desire for no such contact.",
+    "explanation": "Online stalking, repeated unwanted contact through digital means. Applies to social media harassment, repeated messaging, and online intimidation.",
+    "offense_tags": ["cybercrime", "stalking", "harassment", "online", "digital"],
+    "keywords": ["cyber", "stalk", "stalking", "online", "harass", "harassment", "internet", "social media", "message", "contact", "follow", "intimidate", "coerce", "email", "WhatsApp"]
+  },
+  {
+    "id": "ppc-cybercrime-3",
+    "act": "Prevention of Electronic Crimes Act 2016",
+    "section": "PECA 2016 S.20",
+    "title": "Offences Against Dignity of Natural Person",
+    "full_text": "Whoever intentionally and publicly exhibits or displays or transmits any information through any information system, which he knows or has reason to believe to be false, and intimidates or harms the reputation or privacy of a natural person, shall be punished with imprisonment for a term which may extend to three years or with fine which may extend to one million rupees or with both.",
+    "explanation": "Online defamation, fake news, and digital content that harms reputation or privacy. Applies to morphed images, fake profiles, and defamatory posts.",
+    "offense_tags": ["cybercrime", "defamation", "reputation", "privacy", "digital", "harassment"],
+    "keywords": ["defamation", "reputation", "privacy", "fake", "false", "information", "display", "transmit", "online", "social media", "image", "morphed", "post", "publish", "harm"]
+  },
+  {
+    "id": "ppc-511",
+    "act": "Pakistan Penal Code",
+    "section": "PPC 511",
+    "title": "Punishment for Attempting to Commit Offences",
+    "full_text": "Whoever attempts to commit an offence punishable by this Code with imprisonment for life or imprisonment, or to cause such an offence to be committed, and in such attempt does any act towards the commission of the offence, shall, where no express provision is made by this Code for the punishment of such attempt, be punished with imprisonment of any description provided for the offence, for a term which may extend to one-half of the imprisonment for life or, as the case may be, one-half of the longest term of imprisonment provided for that offence, or with such fine as is provided for the offence, or with both.",
+    "explanation": "Attempt to commit any punishable offence. Applies when the act is begun but not completed. Carries up to half the punishment of the completed offence.",
+    "offense_tags": ["attempt", "incomplete", "preparation"],
+    "keywords": ["attempt", "tried", "incomplete", "preparation", "towards", "act", "begin", "start", "partial"]
+  }
+]

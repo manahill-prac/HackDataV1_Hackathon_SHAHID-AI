@@ -1,0 +1,62 @@
+[
+  {
+    "id": "qse-17",
+    "act": "Qanun-e-Shahadat Order 1984",
+    "section": "QSO Article 17",
+    "title": "Number of Witnesses",
+    "full_text": "The number of witnesses required in any case shall be determined in accordance with the injunctions of Islam as laid down in the Holy Quran and Sunnah.",
+    "explanation": "Establishes witness requirements under Pakistani evidence law. Relevant to witness testimony admissibility in criminal proceedings.",
+    "offense_tags": ["witness", "testimony", "admissibility", "evidence"],
+    "keywords": ["witness", "testimony", "number", "required", "admissibility", "evidence", "court", "statement"]
+  },
+  {
+    "id": "qse-46",
+    "act": "Qanun-e-Shahadat Order 1984",
+    "section": "QSO Article 46",
+    "title": "Admissibility of Electronic Evidence",
+    "full_text": "In any proceedings, a statement contained in a document produced by a computer shall be admissible as evidence of any fact stated therein of which direct oral evidence would be admissible, if it is shown that the conditions mentioned in this Article are satisfied in relation to the statement and computer in question.",
+    "explanation": "Digital and electronic evidence admissibility. Establishes conditions for computer-generated records to be admitted as evidence in court. Critical for CCTV footage, digital photos, and electronic records.",
+    "offense_tags": ["digital evidence", "electronic", "computer", "admissibility", "CCTV"],
+    "keywords": ["electronic", "digital", "computer", "document", "admissible", "evidence", "CCTV", "photo", "video", "record", "produced", "statement", "court"]
+  },
+  {
+    "id": "qse-59",
+    "act": "Qanun-e-Shahadat Order 1984",
+    "section": "QSO Article 59",
+    "title": "Primary Evidence",
+    "full_text": "Primary evidence means the document itself produced for the inspection of the Court.",
+    "explanation": "Original document as primary evidence. Applies to original photographs, original digital files, and original recordings presented to court.",
+    "offense_tags": ["primary evidence", "original", "document", "court"],
+    "keywords": ["primary", "evidence", "original", "document", "inspection", "court", "produced", "photograph", "recording", "file"]
+  },
+  {
+    "id": "qse-73a",
+    "act": "Qanun-e-Shahadat Order 1984",
+    "section": "QSO Article 73-A",
+    "title": "Proof of Electronic Records",
+    "full_text": "Notwithstanding anything contained in this Order, any information contained in an electronic record which is printed on a paper, stored, recorded or copied in optical or magnetic media produced by a computer shall be deemed to be also a document, if the conditions mentioned in this Article are satisfied in relation to the information and computer in question and shall be admissible in any proceedings, without further proof or production of the original, as evidence of any contents of the original or of any fact stated therein of which direct evidence would be admissible.",
+    "explanation": "Electronic records printed or stored are admissible as documents. Applies to printed CCTV stills, exported digital evidence, and hash-verified records.",
+    "offense_tags": ["electronic record", "digital evidence", "admissibility", "computer", "printed"],
+    "keywords": ["electronic", "record", "printed", "stored", "computer", "admissible", "document", "optical", "magnetic", "media", "hash", "digital", "evidence", "proof"]
+  },
+  {
+    "id": "qse-chain",
+    "act": "Qanun-e-Shahadat Order 1984",
+    "section": "QSO Article 151",
+    "title": "Impeaching Credit of Witness — Chain of Custody",
+    "full_text": "The credit of a witness may be impeached in the following ways by the adverse party, or, with the consent of the Court, by the party who calls him: (1) by the evidence of persons who testify that they, from their knowledge of the witness, believe him to be unworthy of credit; (2) by proof that the witness has been bribed, or has accepted the offer of a bribe, or has received any other corrupt inducement to give his evidence; (3) by proof of former statements inconsistent with any part of his evidence which is liable to be contradicted.",
+    "explanation": "Witness credibility and chain of custody integrity. Unbroken chain of custody prevents evidence from being impeached. Digital hash verification supports chain integrity.",
+    "offense_tags": ["chain of custody", "witness", "credibility", "integrity", "evidence"],
+    "keywords": ["chain", "custody", "witness", "credibility", "integrity", "impeach", "bribe", "statement", "inconsistent", "evidence", "hash", "tamper", "unbroken"]
+  },
+  {
+    "id": "qse-confession",
+    "act": "Qanun-e-Shahadat Order 1984",
+    "section": "QSO Article 37",
+    "title": "Confession Caused by Inducement, Threat or Promise",
+    "full_text": "A confession made by an accused person is irrelevant in a criminal proceeding, if the making of the confession appears to the Court to have been caused by any inducement, threat or promise having reference to the charge against the accused person, proceeding from a person in authority, and sufficient, in the opinion of the Court, to give the accused person grounds which would appear to him reasonable for supposing that by making it he would gain any advantage or avoid any evil of a temporal nature in reference to the proceedings against him.",
+    "explanation": "Confessions obtained through inducement, threat, or promise are inadmissible. Protects against coerced confessions. Relevant to evidence integrity and admissibility challenges.",
+    "offense_tags": ["confession", "admissibility", "coercion", "threat", "evidence"],
+    "keywords": ["confession", "inducement", "threat", "promise", "accused", "irrelevant", "inadmissible", "coerced", "authority", "advantage", "criminal"]
+  }
+]
