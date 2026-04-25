@@ -71,6 +71,104 @@ From a phone camera to a court-ready evidence package.
 
 ---
 
+# System Design Architecture
+
+## High-Level Architecture
+
+```text
+Citizen / Officer Inputs
+(Photos • Video • Voice • CCTV • Uploads)
+                │
+                ▼
+────────────────────────────────────────
+Layer 1 — Evidence Capture Layer
+- Media acquisition
+- GPS + timestamp extraction
+- Incident metadata capture
+────────────────────────────────────────
+                │
+                ▼
+Layer 2 — Integrity & Security Layer
+- SHA-256 evidence hashing
+- Tamper-evident custody chain
+- Evidence verification
+- Encryption-ready storage model
+────────────────────────────────────────
+                │
+                ▼
+Layer 3 — AI Intelligence Layer
+- Gemini witness generation
+- Face intelligence correlation
+- Crime prediction ML
+- Threat anomaly detection
+────────────────────────────────────────
+                │
+                ▼
+Layer 4 — Legal Intelligence Layer
+- BM25 + TF-IDF Legal RAG
+- PPC / CrPC / QSO retrieval
+- Explainable law matching
+- FIR draft generation
+────────────────────────────────────────
+                │
+                ▼
+Layer 5 — Decision & Output Layer
+- Court submission packet
+- Threat command board
+- Case readiness scoring
+- Verification & investigation support
+────────────────────────────────────────
+```
+
+## Data Flow Pipeline
+
+```text
+Capture Evidence
+→ Hash + Seal
+→ Chain of Custody
+→ AI Analysis
+→ Legal Retrieval
+→ Threat Correlation
+→ FIR Draft
+→ Court Submission Packet
+```
+
+## Core Components
+
+### Frontend Intelligence Layer
+- React SPA modular architecture  
+- Route-based modules for evidence, prediction, legal intelligence and demo mode  
+- Local browser storage for portable evidence records  
+
+### Intelligence Engines
+- Witness Intelligence Engine  
+- Legal Retrieval Engine  
+- Threat Fusion Engine  
+- Crime Prediction Engine  
+- Case Readiness Engine  
+
+### Security Architecture
+- SHA-256 hashing for integrity  
+- Linked custody event hashes  
+- Browser Crypto APIs  
+- Public hash verification workflow  
+- Role-based security model (demo architecture)
+
+## Architectural Highlights
+- Browser-native zero-cost architecture  
+- Hybrid symbolic + ML intelligence design  
+- Offline-capable legal retrieval and prediction  
+- Explainable AI outputs (not black-box only)  
+- Designed as modular justice-tech platform
+
+## System Design Philosophy
+SHAHID.AI follows:
+
+**Capture → Trust → Analyze → Correlate → Act**
+
+The system is designed to transform raw digital evidence into trusted, explainable, investigation-ready intelligence.
+
+
 # 5-Layer AI Fusion Architecture
 
 SHAHID.AI combines five intelligence layers:
