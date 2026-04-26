@@ -277,22 +277,42 @@ Never return empty offense_keywords. If image is unclear, describe what can be i
         extraction.offense_indicators ? `Offense indicators: ${extraction.offense_indicators}` : "",
       ].filter(Boolean).join("\n");
 
-      const witnessPrompt = `You are a Pakistani legal forensic AI. Generate a scene-intelligence witness statement as JSON only, no markdown, no extra text.
-You have the following structured scene analysis from forensic extraction:
+      const witnessPrompt = `You are a forensic scene observer writing an intelligence report. Your job is to describe what is VISIBLE in the evidence — not to summarize metadata.
+
+HARD RULES — VIOLATIONS ARE NOT ACCEPTABLE:
+- DO NOT begin any sentence with "Evidence captured at", "Digital evidence", "The digital record", or any reference to coordinates, hashes, or custody.
+- DO NOT write generic legal preservation text.
+- DO NOT mention GPS, SHA-256, timestamps, or chain-of-custody in the witness statement.
+- DO NOT produce placeholder or template text.
+- ONLY describe what is observable in the scene.
+
+YOUR TASK: Write a witness narrative from the scene observations below. Reference the specific observations directly.
+
+SCENE OBSERVATIONS (you MUST reference these in your statement):
 ${sceneIntelligence || evidenceSummary}
-Offense keywords: ${offenseContext}
 Crime category: ${extraction.crime_category || captured.incidentType}
-Weapon present: ${extraction.weapon_present ? "yes" : "no"}
-Victim harm level: ${extraction.victim_harm || "unknown"}
-Location: ${captured.locationLabel}. Time: ${captured.timestamp}.
-Confidence of scene analysis: ${extraction.confidence || "medium"}
+Weapon present: ${extraction.weapon_present ? "YES — must be mentioned" : "not observed"}
+Victim harm: ${extraction.victim_harm || "unknown"}
+Confidence: ${extraction.confidence || "medium"}
 
-Write a witness statement that describes what was OBSERVED in the scene — visible actions, objects, indicators — not generic custody language.
-Be conservative and factual. Label uncertain observations as "indicators suggest" or "consistent with".
-Do not hallucinate specific names, faces, or unobservable details.
+FEW-SHOT EXAMPLES OF CORRECT OUTPUT:
 
-Respond ONLY with this exact JSON (same schema, no extra fields):
-{"statement_en":"3-sentence scene-intelligence witness statement describing observable evidence, visible indicators, and offense context in formal legal English","statement_ur":"same statement in Urdu — describe the scene, not just metadata","ppc_sections":[{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"}],"case_score":75,"risk_assessment":"2 sentences: first describe observable risk indicators, second give investigative recommendation","recommended_action":"specific actionable next steps based on scene intelligence"}`;
+Example 1 — violent assault with weapon:
+scene_summary: "Individual holding bladed object, another person on ground with visible injury"
+CORRECT statement_en: "Visual indicators at the scene are consistent with a violent assault. An individual is observed holding what appears to be a bladed object, and a second person is visible on the ground showing apparent injury indicators. Scene evidence suggests active physical confrontation requiring immediate investigative response."
+
+Example 2 — theft scene:
+scene_summary: "Broken shop display, scattered items on floor, individual near open cash register"
+CORRECT statement_en: "The scene shows indicators consistent with a theft offense. Observable evidence includes a broken display case, displaced merchandise on the floor, and an individual positioned near an open cash register. These visual indicators suggest unauthorized property removal warranting investigation under applicable theft statutes."
+
+Example 3 — suspicious activity, no clear image:
+scene_summary: "unclear image, suspicious activity declared"
+CORRECT statement_en: "Scene indicators are consistent with suspicious activity at the reported location. Observable context suggests potential pre-offense behavior based on the declared incident classification. Investigative assessment is recommended to determine the nature and extent of the activity."
+
+NOW WRITE THE ACTUAL STATEMENT for this evidence. Use the scene observations above. Be specific. Be conservative. 2-4 sentences.
+
+Respond ONLY with this exact JSON — no markdown, no extra text, no explanation:
+{"statement_en":"[YOUR SCENE-INTELLIGENCE NARRATIVE — describe what is observed, not metadata]","statement_ur":"[same narrative in Urdu — describe the scene]","ppc_sections":[{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"}],"case_score":75,"risk_assessment":"[sentence 1: describe observable risk indicators from scene] [sentence 2: investigative recommendation]","recommended_action":"[specific next steps based on scene observations]"}`;
 
       const witnessResponse = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
