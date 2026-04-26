@@ -225,12 +225,12 @@ function CaptureEvidence() {
       // ── Stage A: structured crime extraction ──────────────────────────────
       // Build multimodal parts — include image if available so Gemini
       // analyzes actual visual content, not just metadata.
-      const extractionPrompt = `You are a Pakistani forensic AI. Analyze this crime evidence and respond ONLY with valid JSON, no markdown, no extra text.
+      const extractionPrompt = `You are a Pakistani forensic scene intelligence AI. Analyze this crime evidence and respond ONLY with valid JSON, no markdown, no extra text.
 Incident type declared: ${captured.incidentType}. Location: ${captured.locationLabel}. Time: ${captured.timestamp}.
-${captured.photoDataUrl ? "An evidence image is attached. Analyze its visual content." : "No image attached — infer from incident type and metadata."}
-Return ONLY this JSON:
-{"incident_type":"${captured.incidentType}","crime_category":"one of: theft|robbery|assault|burglary|fraud|weapons|harassment|cybercrime|suspicious","weapon_present":false,"victim_harm":"none|minor|serious|critical","evidence_summary":"1-2 sentence factual description of what the evidence shows","offense_keywords":["keyword1","keyword2","keyword3","keyword4","keyword5"],"confidence":"high|medium|low"}
-If uncertain, infer the most likely offense. Never return empty offense_keywords.`;
+${captured.photoDataUrl ? "An evidence image is attached. Prioritize visual scene analysis over metadata." : "No image attached — infer from incident type and metadata."}
+Return ONLY this JSON (be specific about what is visually observable; if uncertain use 'not clearly visible'):
+{"incident_type":"${captured.incidentType}","crime_category":"one of: theft|robbery|assault|burglary|fraud|weapons|harassment|cybercrime|suspicious","weapon_present":false,"victim_harm":"none|minor|serious|critical","scene_summary":"1-2 sentences describing what is visually observable in the scene","visible_actions":"describe any actions or movements visible, or 'none observed'","objects_observed":"list key objects, items, or vehicles visible, or 'none identified'","injury_damage_indicators":"describe any visible injury, damage, or distress indicators, or 'none visible'","location_clues":"describe environmental or location context visible in the scene","offense_indicators":"describe behavioral or physical indicators suggesting the offense type","evidence_summary":"1-2 sentence factual description combining scene and offense context","offense_keywords":["keyword1","keyword2","keyword3","keyword4","keyword5"],"confidence":"high|medium|low"}
+Never return empty offense_keywords. If image is unclear, describe what can be inferred from incident type and context.`;
 
       const extractionParts = [{ text: extractionPrompt }];
       // Attach image inline if it's a photo with a data URL
@@ -268,15 +268,31 @@ If uncertain, infer the most likely offense. Never return empty offense_keywords
       // Feed extracted offense keywords + evidence summary into the witness prompt.
       const offenseContext = extraction.offense_keywords.join(", ");
       const evidenceSummary = extraction.evidence_summary || `${captured.incidentType} incident at ${captured.locationLabel}`;
-      const witnessPrompt = `You are a Pakistani legal forensic AI assistant. Generate a formal legal witness statement strictly as JSON only, no other text.
-Evidence summary: ${evidenceSummary}
-Offense keywords identified: ${offenseContext}
+      const sceneIntelligence = [
+        extraction.scene_summary ? `Scene: ${extraction.scene_summary}` : "",
+        extraction.visible_actions && extraction.visible_actions !== "none observed" ? `Actions observed: ${extraction.visible_actions}` : "",
+        extraction.objects_observed && extraction.objects_observed !== "none identified" ? `Objects: ${extraction.objects_observed}` : "",
+        extraction.injury_damage_indicators && extraction.injury_damage_indicators !== "none visible" ? `Injury/damage: ${extraction.injury_damage_indicators}` : "",
+        extraction.location_clues ? `Location context: ${extraction.location_clues}` : "",
+        extraction.offense_indicators ? `Offense indicators: ${extraction.offense_indicators}` : "",
+      ].filter(Boolean).join("\n");
+
+      const witnessPrompt = `You are a Pakistani legal forensic AI. Generate a scene-intelligence witness statement as JSON only, no markdown, no extra text.
+You have the following structured scene analysis from forensic extraction:
+${sceneIntelligence || evidenceSummary}
+Offense keywords: ${offenseContext}
 Crime category: ${extraction.crime_category || captured.incidentType}
 Weapon present: ${extraction.weapon_present ? "yes" : "no"}
-Victim harm: ${extraction.victim_harm || "unknown"}
+Victim harm level: ${extraction.victim_harm || "unknown"}
 Location: ${captured.locationLabel}. Time: ${captured.timestamp}.
-Respond ONLY with this exact JSON:
-{"statement_en":"neutral 3-sentence formal legal witness statement in English referencing the offense keywords","statement_ur":"same statement in Urdu","ppc_sections":[{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"}],"case_score":75,"risk_assessment":"2 sentence risk analysis","recommended_action":"specific next steps"}`;
+Confidence of scene analysis: ${extraction.confidence || "medium"}
+
+Write a witness statement that describes what was OBSERVED in the scene — visible actions, objects, indicators — not generic custody language.
+Be conservative and factual. Label uncertain observations as "indicators suggest" or "consistent with".
+Do not hallucinate specific names, faces, or unobservable details.
+
+Respond ONLY with this exact JSON (same schema, no extra fields):
+{"statement_en":"3-sentence scene-intelligence witness statement describing observable evidence, visible indicators, and offense context in formal legal English","statement_ur":"same statement in Urdu — describe the scene, not just metadata","ppc_sections":[{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"}],"case_score":75,"risk_assessment":"2 sentences: first describe observable risk indicators, second give investigative recommendation","recommended_action":"specific actionable next steps based on scene intelligence"}`;
 
       const witnessResponse = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
