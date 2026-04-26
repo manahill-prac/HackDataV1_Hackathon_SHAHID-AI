@@ -323,19 +323,31 @@ Respond ONLY with this exact JSON — no markdown, no extra text, no explanation
         }
       );
       const witnessData = await witnessResponse.json();
-      const witnessRaw = witnessData?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      const witnessRaw = witnessData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
       let aiResult = {};
       try {
-        aiResult = JSON.parse(witnessRaw.replace(/```json|```/g, "").trim());
+        // Strip all markdown code fence variants Gemini may produce
+        const cleaned = witnessRaw
+          .replace(/^```[a-z]*\s*/i, "")   // opening fence with optional language tag
+          .replace(/\s*```\s*$/i, "")       // closing fence
+          .replace(/^`|`$/g, "")            // single backtick wrapping
+          .trim();
+        if (cleaned) {
+          aiResult = JSON.parse(cleaned);
+        }
       } catch {
-        // JSON parse failed — build minimal valid result from extraction
+        // JSON parse failed — use fallback
         aiResult = buildFallbackAiResult(captured, extraction);
       }
 
-      // Guarantee statement_en is never empty
+      // Only fill in missing fields from fallback — never overwrite a real Gemini value.
+      // Previous bug: spread order was reversed, causing fallback to win over real output.
       if (!aiResult.statement_en) {
-        aiResult = { ...buildFallbackAiResult(captured, extraction), ...aiResult };
+        const fallback = buildFallbackAiResult(captured, extraction);
+        aiResult = { ...fallback, ...aiResult };
+        // After merge, if statement_en is still empty/undefined, force the fallback value
+        if (!aiResult.statement_en) aiResult.statement_en = fallback.statement_en;
       }
 
       // Generate compressed thumbnail for storage (full-res stays in React state for session preview)
