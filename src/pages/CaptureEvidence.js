@@ -222,132 +222,167 @@ function CaptureEvidence() {
     const status = riskLevel === "High" ? "Flagged" : "Verified";
 
     try {
-      // ── Stage A: structured crime extraction ──────────────────────────────
-      // Build multimodal parts — include image if available so Gemini
-      // analyzes actual visual content, not just metadata.
-      const extractionPrompt = `You are a Pakistani forensic scene intelligence AI. Analyze this crime evidence and respond ONLY with valid JSON, no markdown, no extra text.
-Incident type declared: ${captured.incidentType}. Location: ${captured.locationLabel}. Time: ${captured.timestamp}.
-${captured.photoDataUrl ? "An evidence image is attached. Prioritize visual scene analysis over metadata." : "No image attached — infer from incident type and metadata."}
-Return ONLY this JSON (be specific about what is visually observable; if uncertain use 'not clearly visible'):
-{"incident_type":"${captured.incidentType}","crime_category":"one of: theft|robbery|assault|burglary|fraud|weapons|harassment|cybercrime|suspicious","weapon_present":false,"victim_harm":"none|minor|serious|critical","scene_summary":"1-2 sentences describing what is visually observable in the scene","visible_actions":"describe any actions or movements visible, or 'none observed'","objects_observed":"list key objects, items, or vehicles visible, or 'none identified'","injury_damage_indicators":"describe any visible injury, damage, or distress indicators, or 'none visible'","location_clues":"describe environmental or location context visible in the scene","offense_indicators":"describe behavioral or physical indicators suggesting the offense type","evidence_summary":"1-2 sentence factual description combining scene and offense context","offense_keywords":["keyword1","keyword2","keyword3","keyword4","keyword5"],"confidence":"high|medium|low"}
-Never return empty offense_keywords. If image is unclear, describe what can be inferred from incident type and context.`;
+      // ── Pass 1 — Pure Visual Scene Extraction ────────────────────────────
+      // Image is placed FIRST in parts array so Gemini grounds in vision before
+      // reading any text instruction. No incident type hint — model observes freely.
+      const pass1Parts = [];
 
-      const extractionParts = [{ text: extractionPrompt }];
-      // Attach image inline if it's a photo with a data URL
       if (captured.photoDataUrl && captured.photoDataUrl.startsWith("data:image/")) {
         const mimeMatch = captured.photoDataUrl.match(/^data:(image\/[a-z]+);base64,/);
         const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
         const base64Data = captured.photoDataUrl.replace(/^data:image\/[a-z]+;base64,/, "");
-        extractionParts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
+        // Image FIRST — forces vision-grounded processing
+        pass1Parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
       }
 
-      const extractionResponse = await fetch(
+      pass1Parts.push({ text: `Describe only what you can directly observe in this image. Do not mention legal terms, custody, GPS, or hashes. Do not assume — only describe visible content.
+
+Return ONLY this JSON, no markdown:
+{"subjects_observed":"describe any people or figures visible, or 'none visible'","actions_observed":"describe any visible actions or movements, or 'none observed'","objects_visible":"list all visible objects, items, weapons, vehicles","weapon_indicators":"describe any visible weapons or weapon-like objects, or 'none visible'","injury_indicators":"describe any visible injuries, blood, distress, or damage, or 'none visible'","scene_context":"describe the environment, setting, lighting, location type","crime_cues":"describe any visual cues suggesting criminal activity","confidence":"high|medium|low","offense_keywords":["keyword1","keyword2","keyword3","keyword4","keyword5"]}
+
+If no image is provided, use incident type context: ${captured.incidentType} at ${captured.locationLabel}.` });
+
+      const pass1Response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: extractionParts }] }),
+          body: JSON.stringify({ contents: [{ parts: pass1Parts }] }),
         }
       );
-      const extractionData = await extractionResponse.json();
-      const extractionRaw = extractionData?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      const pass1Data = await pass1Response.json();
+      const pass1Raw = pass1Data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 
-      let extraction = {};
+      let sceneObs = {};
       try {
-        extraction = JSON.parse(extractionRaw.replace(/```json|```/g, "").trim());
+        sceneObs = JSON.parse(pass1Raw.replace(/```json[\s\S]*?```|```/g, "").trim());
       } catch {
-        // Fallback: derive offense keywords from incident type
-        extraction = deriveOffenseKeywordsFallback(captured.incidentType);
+        sceneObs = deriveOffenseKeywordsFallback(captured.incidentType);
       }
-      // Guarantee offense_keywords is never empty
-      if (!Array.isArray(extraction.offense_keywords) || !extraction.offense_keywords.length) {
-        extraction = { ...extraction, ...deriveOffenseKeywordsFallback(captured.incidentType) };
+      if (!Array.isArray(sceneObs.offense_keywords) || !sceneObs.offense_keywords.length) {
+        sceneObs.offense_keywords = deriveOffenseKeywordsFallback(captured.incidentType).offense_keywords;
       }
 
-      // ── Stage B: full legal witness analysis ─────────────────────────────
-      // Feed extracted offense keywords + evidence summary into the witness prompt.
-      const offenseContext = extraction.offense_keywords.join(", ");
-      const evidenceSummary = extraction.evidence_summary || `${captured.incidentType} incident at ${captured.locationLabel}`;
-      const sceneIntelligence = [
-        extraction.scene_summary ? `Scene: ${extraction.scene_summary}` : "",
-        extraction.visible_actions && extraction.visible_actions !== "none observed" ? `Actions observed: ${extraction.visible_actions}` : "",
-        extraction.objects_observed && extraction.objects_observed !== "none identified" ? `Objects: ${extraction.objects_observed}` : "",
-        extraction.injury_damage_indicators && extraction.injury_damage_indicators !== "none visible" ? `Injury/damage: ${extraction.injury_damage_indicators}` : "",
-        extraction.location_clues ? `Location context: ${extraction.location_clues}` : "",
-        extraction.offense_indicators ? `Offense indicators: ${extraction.offense_indicators}` : "",
+      // Build extraction shape expected by RAG + FIR engine (backward compat)
+      const extraction = {
+        incident_type: captured.incidentType,
+        crime_category: captured.incidentType,
+        weapon_present: sceneObs.weapon_indicators && sceneObs.weapon_indicators !== "none visible",
+        victim_harm: sceneObs.injury_indicators && sceneObs.injury_indicators !== "none visible" ? "minor" : "none",
+        evidence_summary: sceneObs.scene_context || `${captured.incidentType} incident`,
+        offense_keywords: sceneObs.offense_keywords,
+        confidence: sceneObs.confidence || "medium",
+        scene_summary: sceneObs.scene_context,
+        visible_actions: sceneObs.actions_observed,
+        objects_observed: sceneObs.objects_visible,
+        injury_damage_indicators: sceneObs.injury_indicators,
+        location_clues: sceneObs.scene_context,
+        offense_indicators: sceneObs.crime_cues,
+      };
+
+      // ── Pass 2 — Witness Narrative Generation ────────────────────────────
+      // Image included again so model writes from direct visual memory, not just
+      // the text summary. Strict scene-only instruction. No legal framing.
+      const sceneBlock = [
+        sceneObs.subjects_observed && sceneObs.subjects_observed !== "none visible" ? `Subjects: ${sceneObs.subjects_observed}` : "",
+        sceneObs.actions_observed && sceneObs.actions_observed !== "none observed" ? `Actions: ${sceneObs.actions_observed}` : "",
+        sceneObs.objects_visible && sceneObs.objects_visible !== "none identified" ? `Objects: ${sceneObs.objects_visible}` : "",
+        sceneObs.weapon_indicators && sceneObs.weapon_indicators !== "none visible" ? `Weapons: ${sceneObs.weapon_indicators}` : "",
+        sceneObs.injury_indicators && sceneObs.injury_indicators !== "none visible" ? `Injuries: ${sceneObs.injury_indicators}` : "",
+        sceneObs.crime_cues ? `Crime cues: ${sceneObs.crime_cues}` : "",
       ].filter(Boolean).join("\n");
 
-      const witnessPrompt = `You are a forensic scene observer writing an intelligence report. Your job is to describe what is VISIBLE in the evidence — not to summarize metadata.
+      const pass2Parts = [];
+      // Image first again — model writes from what it sees
+      if (captured.photoDataUrl && captured.photoDataUrl.startsWith("data:image/")) {
+        const mimeMatch = captured.photoDataUrl.match(/^data:(image\/[a-z]+);base64,/);
+        const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+        const base64Data = captured.photoDataUrl.replace(/^data:image\/[a-z]+;base64,/, "");
+        pass2Parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
+      }
 
-HARD RULES — VIOLATIONS ARE NOT ACCEPTABLE:
-- DO NOT begin any sentence with "Evidence captured at", "Digital evidence", "The digital record", or any reference to coordinates, hashes, or custody.
-- DO NOT write generic legal preservation text.
-- DO NOT mention GPS, SHA-256, timestamps, or chain-of-custody in the witness statement.
-- DO NOT produce placeholder or template text.
-- ONLY describe what is observable in the scene.
+      pass2Parts.push({ text: `Write a 2-3 sentence witness intelligence statement describing what is visually observable in this evidence.
 
-YOUR TASK: Write a witness narrative from the scene observations below. Reference the specific observations directly.
+Scene analysis extracted:
+${sceneBlock || `Incident type: ${captured.incidentType}`}
 
-SCENE OBSERVATIONS (you MUST reference these in your statement):
-${sceneIntelligence || evidenceSummary}
-Crime category: ${extraction.crime_category || captured.incidentType}
-Weapon present: ${extraction.weapon_present ? "YES — must be mentioned" : "not observed"}
-Victim harm: ${extraction.victim_harm || "unknown"}
-Confidence: ${extraction.confidence || "medium"}
+STRICT RULES:
+- Start with what is VISIBLE or OBSERVED — never with location, coordinates, or metadata
+- Never write: "Evidence captured at", "cryptographically", "chain of custody", "SHA", "GPS", "digital record", "preserved for legal"
+- Use language like: "Visual indicators show...", "An individual is observed...", "Scene evidence suggests...", "Observable indicators consistent with..."
+- Be conservative — say "appears to be" or "indicators consistent with" for uncertain observations
+- Do not invent names, identities, or unobservable facts
 
-FEW-SHOT EXAMPLES OF CORRECT OUTPUT:
+Return ONLY this JSON, no markdown, no extra text:
+{"statement_en":"[2-3 sentence scene-intelligence witness narrative starting with what is visually observed]","statement_ur":"[same in Urdu, describing the scene]","ppc_sections":[{"section":"PPC XXX","title":"title","description":"description","penalty":"penalty"},{"section":"PPC XXX","title":"title","description":"description","penalty":"penalty"},{"section":"PPC XXX","title":"title","description":"description","penalty":"penalty"}],"case_score":72,"risk_assessment":"[observable risk indicators]. [investigative recommendation].","recommended_action":"[specific next steps]"}` });
 
-Example 1 — violent assault with weapon:
-scene_summary: "Individual holding bladed object, another person on ground with visible injury"
-CORRECT statement_en: "Visual indicators at the scene are consistent with a violent assault. An individual is observed holding what appears to be a bladed object, and a second person is visible on the ground showing apparent injury indicators. Scene evidence suggests active physical confrontation requiring immediate investigative response."
-
-Example 2 — theft scene:
-scene_summary: "Broken shop display, scattered items on floor, individual near open cash register"
-CORRECT statement_en: "The scene shows indicators consistent with a theft offense. Observable evidence includes a broken display case, displaced merchandise on the floor, and an individual positioned near an open cash register. These visual indicators suggest unauthorized property removal warranting investigation under applicable theft statutes."
-
-Example 3 — suspicious activity, no clear image:
-scene_summary: "unclear image, suspicious activity declared"
-CORRECT statement_en: "Scene indicators are consistent with suspicious activity at the reported location. Observable context suggests potential pre-offense behavior based on the declared incident classification. Investigative assessment is recommended to determine the nature and extent of the activity."
-
-NOW WRITE THE ACTUAL STATEMENT for this evidence. Use the scene observations above. Be specific. Be conservative. 2-4 sentences.
-
-Respond ONLY with this exact JSON — no markdown, no extra text, no explanation:
-{"statement_en":"[YOUR SCENE-INTELLIGENCE NARRATIVE — describe what is observed, not metadata]","statement_ur":"[same narrative in Urdu — describe the scene]","ppc_sections":[{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"}],"case_score":75,"risk_assessment":"[sentence 1: describe observable risk indicators from scene] [sentence 2: investigative recommendation]","recommended_action":"[specific next steps based on scene observations]"}`;
-
-      const witnessResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      const pass2Response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: witnessPrompt }] }] }),
+          body: JSON.stringify({ contents: [{ parts: pass2Parts }] }),
         }
       );
-      const witnessData = await witnessResponse.json();
-      const witnessRaw = witnessData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const pass2Data = await pass2Response.json();
+      const pass2Raw = pass2Data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-      let aiResult = {};
-      try {
-        // Strip all markdown code fence variants Gemini may produce
-        const cleaned = witnessRaw
-          .replace(/^```[a-z]*\s*/i, "")   // opening fence with optional language tag
-          .replace(/\s*```\s*$/i, "")       // closing fence
-          .replace(/^`|`$/g, "")            // single backtick wrapping
-          .trim();
-        if (cleaned) {
-          aiResult = JSON.parse(cleaned);
-        }
-      } catch {
-        // JSON parse failed — use fallback
-        aiResult = buildFallbackAiResult(captured, extraction);
+      // ── Parse + boilerplate validator ─────────────────────────────────────
+      const BOILERPLATE_PHRASES = [
+        "evidence captured at",
+        "cryptographically sealed",
+        "chain of custody",
+        "preserved for legal review",
+        "digital record has been",
+      ];
+
+      function isBoilerplate(text) {
+        if (!text) return true;
+        const lower = text.toLowerCase();
+        return BOILERPLATE_PHRASES.some((p) => lower.includes(p));
       }
 
-      // Only fill in missing fields from fallback — never overwrite a real Gemini value.
-      // Previous bug: spread order was reversed, causing fallback to win over real output.
-      if (!aiResult.statement_en) {
-        const fallback = buildFallbackAiResult(captured, extraction);
-        aiResult = { ...fallback, ...aiResult };
-        // After merge, if statement_en is still empty/undefined, force the fallback value
-        if (!aiResult.statement_en) aiResult.statement_en = fallback.statement_en;
+      function parseGeminiJson(raw) {
+        if (!raw) return null;
+        try {
+          const cleaned = raw
+            .replace(/^```[a-z]*\n?/i, "")
+            .replace(/\n?```$/i, "")
+            .trim();
+          return JSON.parse(cleaned);
+        } catch { return null; }
+      }
+
+      let aiResult = parseGeminiJson(pass2Raw);
+
+      // Auto-regenerate once if output is boilerplate or parse failed
+      if (!aiResult || isBoilerplate(aiResult.statement_en)) {
+        const retryParts = [];
+        if (captured.photoDataUrl && captured.photoDataUrl.startsWith("data:image/")) {
+          const mimeMatch = captured.photoDataUrl.match(/^data:(image\/[a-z]+);base64,/);
+          const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+          const base64Data = captured.photoDataUrl.replace(/^data:image\/[a-z]+;base64,/, "");
+          retryParts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
+        }
+        retryParts.push({ text: `Look at this image. Write 2-3 sentences describing ONLY what you can see. Start with "Visual evidence shows" or "The scene indicates". Do not mention GPS, hashes, custody, or coordinates. Return JSON: {"statement_en":"...","statement_ur":"...","ppc_sections":[],"case_score":65,"risk_assessment":"...","recommended_action":"..."}` });
+
+        const retryResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${key}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts: retryParts }] }),
+          }
+        );
+        const retryData = await retryResponse.json();
+        const retryRaw = retryData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        aiResult = parseGeminiJson(retryRaw);
+      }
+
+      // Final fallback — only if both passes and retry all failed
+      if (!aiResult || !aiResult.statement_en || isBoilerplate(aiResult.statement_en)) {
+        const fb = buildFallbackAiResult(captured, extraction);
+        aiResult = aiResult ? { ...fb, ...aiResult, statement_en: aiResult.statement_en || fb.statement_en } : fb;
       }
 
       // Generate compressed thumbnail for storage (full-res stays in React state for session preview)

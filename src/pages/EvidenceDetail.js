@@ -292,7 +292,7 @@ function EvidenceDetail() {
 
         {/* AI Witness Statement */}
         <article className="ui-card">
-          <h2 className="text-lg font-bold text-[#F2F2F2]">AI Witness Statement | اے آئی گواہ بیان</h2>
+          <h2 className="text-lg font-bold text-[#F2F2F2]">AI Evidence Intelligence Statement | اے آئی شواہد انٹیلیجنس بیان</h2>
           {ai.statement_en ? (
             <>
               <p className="mt-3 text-sm text-[#B6C1D1]">{ai.statement_en}</p>

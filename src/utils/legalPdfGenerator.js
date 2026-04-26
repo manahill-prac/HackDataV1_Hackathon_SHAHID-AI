@@ -329,9 +329,9 @@ export function generateCourtPacket(evidence, retrievedLaws, firDraft, caseReadi
     <div class="hash-box">${evidence.hash || "Not computed"}</div>
   </div>
 
-  <!-- AI WITNESS STATEMENT -->
+  <!-- AI EVIDENCE INTELLIGENCE STATEMENT -->
   <div class="section">
-    <div class="section-title">AI Witness Statement</div>
+    <div class="section-title">AI Evidence Intelligence Statement</div>
     ${ai.statement_en
       ? `<div class="statement-box">${ai.statement_en}</div>`
       : `<div class="statement-box" style="color:#94a3b8">AI statement not available.</div>`}

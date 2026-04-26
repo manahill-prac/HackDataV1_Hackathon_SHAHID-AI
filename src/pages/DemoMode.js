@@ -46,14 +46,14 @@ const STEPS = [
   },
   {
     step: 3,
-    title: "AI Witness Statement Generated",
-    titleUr: "اے آئی گواہ بیان تیار",
+    title: "AI Evidence Intelligence Statement Generated",
+    titleUr: "اے آئی شواہد انٹیلیجنس بیان تیار",
     icon: "🤖",
     route: "/evidence/DEMO-001",
     routeLabel: "View AI Statement",
     summary: "Gemini 1.5 Flash analyzes the incident metadata and generates a formal bilingual legal witness statement in English and Urdu, plus PPC section identification and risk assessment.",
     talking: "Pakistan's first AI-generated legal witness statement. Bilingual. Grounded in incident facts. Not a template.",
-    signal: "AI witness statement + PPC sections + risk score generated.",
+    signal: "AI evidence intelligence statement + PPC sections + risk score generated.",
     color: "purple",
   },
   {

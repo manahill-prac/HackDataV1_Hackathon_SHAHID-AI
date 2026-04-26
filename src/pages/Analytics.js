@@ -357,12 +357,12 @@ function Analytics() {
         <svg viewBox="0 0 500 260" className="w-full rounded-xl bg-slate-100 p-3">
           <path d="M90 200 L120 145 L145 116 L205 90 L250 75 L305 78 L350 96 L405 140 L380 196 L330 226 L260 220 L205 236 L140 228 Z" fill="#dbeafe" stroke="#1A56DB" strokeWidth="3" />
           {[
-            { city: "Karachi", x: 150, y: 210 },
-            { city: "Lahore", x: 275, y: 105 },
-            { city: "Islamabad", x: 300, y: 80 },
-            { city: "Rawalpindi", x: 306, y: 88 },
-            { city: "Peshawar", x: 250, y: 70 },
-            { city: "Quetta", x: 120, y: 120 },
+            { city: "Karachi",     x: 150, y: 210, lx: 8,   ly: -6  },
+            { city: "Lahore",      x: 310, y: 130, lx: 8,   ly: -6  },
+            { city: "Islamabad",   x: 290, y: 82,  lx: -76, ly: -6  },
+            { city: "Rawalpindi",  x: 308, y: 90,  lx: 8,   ly: -6  },
+            { city: "Peshawar",    x: 248, y: 65,  lx: 8,   ly: -6  },
+            { city: "Quetta",      x: 118, y: 148, lx: 8,   ly: -6  },
           ].map((city) => {
             const count = cityCounts.find((c) => c.city === city.city)?.count || 0;
             return (
@@ -370,7 +370,22 @@ function Analytics() {
                 <circle cx={city.x} cy={city.y} r={Math.max(4, count + 3)} fill={count > 8 ? "#dc2626" : count > 4 ? "#f59e0b" : "#10b981"} opacity="0.7">
                   <title>{`${city.city}: ${count}`}</title>
                 </circle>
-                <text x={city.x + 7} y={city.y - 3} fontSize="11" fill="#0f172a">
+                {/* Label background for readability on dark map */}
+                <rect
+                  x={city.x + city.lx - 2}
+                  y={city.y + city.ly - 10}
+                  width={city.city.length * 6.2 + 4}
+                  height={13}
+                  rx="2"
+                  fill="rgba(15,23,42,0.65)"
+                />
+                <text
+                  x={city.x + city.lx}
+                  y={city.y + city.ly}
+                  fontSize="10"
+                  fontWeight="600"
+                  fill="#f1f5f9"
+                >
                   {city.city}
                 </text>
               </g>
