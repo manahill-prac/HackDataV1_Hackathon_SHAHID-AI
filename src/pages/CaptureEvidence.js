@@ -18,6 +18,67 @@ async function hashBufferToHex(buffer) {
     .join("");
 }
 
+/**
+ * Compress a full-res dataUrl to a small thumbnail for storage.
+ * Target: 320×240, JPEG quality 0.55 → ~15–25 KB base64.
+ * The full-res image is kept in React state for session preview only.
+ * Returns the thumbnail dataUrl, or empty string on failure.
+ */
+async function compressThumbnail(dataUrl, maxW = 320, maxH = 240) {
+  if (!dataUrl || !dataUrl.startsWith("data:image/")) return "";
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.55));
+      } catch { resolve(""); }
+    };
+    img.onerror = () => resolve("");
+    img.src = dataUrl;
+  });
+}
+
+// ─── Offense keyword fallback map ────────────────────────────────────────────
+// Guarantees offense_keywords are never empty even if Gemini fails.
+// Keyed by incidentType values used in the select dropdown.
+const OFFENSE_KEYWORD_MAP = {
+  theft:      { crime_category: "theft",    offense_keywords: ["theft", "steal", "stolen", "property", "dishonest", "possession", "took", "snatching"] },
+  robbery:    { crime_category: "robbery",  offense_keywords: ["robbery", "rob", "force", "violence", "threat", "hurt", "weapon", "armed", "snatched"] },
+  violent:    { crime_category: "assault",  offense_keywords: ["assault", "attack", "hurt", "injury", "violent", "beat", "wound", "force", "weapon"] },
+  fraud:      { crime_category: "fraud",    offense_keywords: ["fraud", "cheat", "deceive", "false", "scam", "dishonest", "money", "fake", "forgery"] },
+  weapons:    { crime_category: "weapons",  offense_keywords: ["weapon", "armed", "gun", "knife", "deadly", "rioting", "arms", "illegal", "possession"] },
+  suspicious: { crime_category: "suspicious", offense_keywords: ["suspicious", "attempt", "abetment", "conspiracy", "trespass", "unlawful", "intent"] },
+  burglary:   { crime_category: "burglary", offense_keywords: ["burglary", "break", "enter", "dwelling", "house", "theft", "trespass", "property"] },
+  harassment: { crime_category: "harassment", offense_keywords: ["harassment", "threat", "intimidate", "woman", "modesty", "stalk", "coerce", "force"] },
+  cybercrime: { crime_category: "cybercrime", offense_keywords: ["cyber", "hack", "unauthorized", "online", "digital", "computer", "stalk", "defamation"] },
+};
+
+function deriveOffenseKeywordsFallback(incidentType) {
+  return OFFENSE_KEYWORD_MAP[incidentType] || OFFENSE_KEYWORD_MAP.suspicious;
+}
+
+// Build a minimal valid aiAnalysis when Gemini JSON parse fails entirely.
+function buildFallbackAiResult(captured, extraction) {
+  const type = captured.incidentType || "suspicious";
+  const loc = captured.locationLabel || "Unknown location";
+  const keywords = (extraction.offense_keywords || []).join(", ") || type;
+  return {
+    statement_en: `Evidence captured at ${loc} indicates a ${type} incident. The digital record has been cryptographically sealed and the chain of custody is intact. Relevant offense indicators include: ${keywords}. This evidence is preserved for legal review.`,
+    statement_ur: `${loc} میں ${type} نوعیت کا واقعہ ریکارڈ کیا گیا۔ ڈیجیٹل ثبوت SHA-256 ہیش کے ذریعے محفوظ کیا گیا ہے۔ قانونی جائزے کے لیے ثبوت محفوظ ہے۔`,
+    ppc_sections: [],
+    case_score: 55,
+    risk_assessment: `${type} incident recorded at ${loc}. Evidence integrity maintained through cryptographic sealing.`,
+    recommended_action: "Forward to investigating officer. Preserve chain of custody. Run Legal RAG retrieval for applicable sections.",
+  };
+}
+
 function CaptureEvidence() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -161,32 +222,105 @@ function CaptureEvidence() {
     const status = riskLevel === "High" ? "Flagged" : "Verified";
 
     try {
-      const prompt = `You are a Pakistani legal forensic AI assistant. Analyze this crime scene evidence strictly as JSON only, no other text. Incident: ${captured.incidentType}. Location: ${captured.locationLabel}. Time: ${captured.timestamp}. Respond ONLY with this exact JSON structure: {"statement_en":"neutral 3-sentence legal witness statement in English","statement_ur":"same statement in Urdu language","ppc_sections":[{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"}],"case_score":75,"risk_assessment":"2 sentence risk analysis","recommended_action":"specific next steps for victim"}`;
-      const geminiResponse = await fetch(
+      // ── Stage A: structured crime extraction ──────────────────────────────
+      // Build multimodal parts — include image if available so Gemini
+      // analyzes actual visual content, not just metadata.
+      const extractionPrompt = `You are a Pakistani forensic AI. Analyze this crime evidence and respond ONLY with valid JSON, no markdown, no extra text.
+Incident type declared: ${captured.incidentType}. Location: ${captured.locationLabel}. Time: ${captured.timestamp}.
+${captured.photoDataUrl ? "An evidence image is attached. Analyze its visual content." : "No image attached — infer from incident type and metadata."}
+Return ONLY this JSON:
+{"incident_type":"${captured.incidentType}","crime_category":"one of: theft|robbery|assault|burglary|fraud|weapons|harassment|cybercrime|suspicious","weapon_present":false,"victim_harm":"none|minor|serious|critical","evidence_summary":"1-2 sentence factual description of what the evidence shows","offense_keywords":["keyword1","keyword2","keyword3","keyword4","keyword5"],"confidence":"high|medium|low"}
+If uncertain, infer the most likely offense. Never return empty offense_keywords.`;
+
+      const extractionParts = [{ text: extractionPrompt }];
+      // Attach image inline if it's a photo with a data URL
+      if (captured.photoDataUrl && captured.photoDataUrl.startsWith("data:image/")) {
+        const mimeMatch = captured.photoDataUrl.match(/^data:(image\/[a-z]+);base64,/);
+        const mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+        const base64Data = captured.photoDataUrl.replace(/^data:image\/[a-z]+;base64,/, "");
+        extractionParts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
+      }
+
+      const extractionResponse = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [{ text: prompt }],
-              },
-            ],
-          }),
+          body: JSON.stringify({ contents: [{ parts: extractionParts }] }),
         }
       );
-      const geminiData = await geminiResponse.json();
-      const aiText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-      const aiResult = JSON.parse(aiText.replace(/```json|```/g, "").trim());
+      const extractionData = await extractionResponse.json();
+      const extractionRaw = extractionData?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+
+      let extraction = {};
+      try {
+        extraction = JSON.parse(extractionRaw.replace(/```json|```/g, "").trim());
+      } catch {
+        // Fallback: derive offense keywords from incident type
+        extraction = deriveOffenseKeywordsFallback(captured.incidentType);
+      }
+      // Guarantee offense_keywords is never empty
+      if (!Array.isArray(extraction.offense_keywords) || !extraction.offense_keywords.length) {
+        extraction = { ...extraction, ...deriveOffenseKeywordsFallback(captured.incidentType) };
+      }
+
+      // ── Stage B: full legal witness analysis ─────────────────────────────
+      // Feed extracted offense keywords + evidence summary into the witness prompt.
+      const offenseContext = extraction.offense_keywords.join(", ");
+      const evidenceSummary = extraction.evidence_summary || `${captured.incidentType} incident at ${captured.locationLabel}`;
+      const witnessPrompt = `You are a Pakistani legal forensic AI assistant. Generate a formal legal witness statement strictly as JSON only, no other text.
+Evidence summary: ${evidenceSummary}
+Offense keywords identified: ${offenseContext}
+Crime category: ${extraction.crime_category || captured.incidentType}
+Weapon present: ${extraction.weapon_present ? "yes" : "no"}
+Victim harm: ${extraction.victim_harm || "unknown"}
+Location: ${captured.locationLabel}. Time: ${captured.timestamp}.
+Respond ONLY with this exact JSON:
+{"statement_en":"neutral 3-sentence formal legal witness statement in English referencing the offense keywords","statement_ur":"same statement in Urdu","ppc_sections":[{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"},{"section":"PPC XXX","title":"section name","description":"what this law covers","penalty":"punishment details"}],"case_score":75,"risk_assessment":"2 sentence risk analysis","recommended_action":"specific next steps"}`;
+
+      const witnessResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: witnessPrompt }] }] }),
+        }
+      );
+      const witnessData = await witnessResponse.json();
+      const witnessRaw = witnessData?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+
+      let aiResult = {};
+      try {
+        aiResult = JSON.parse(witnessRaw.replace(/```json|```/g, "").trim());
+      } catch {
+        // JSON parse failed — build minimal valid result from extraction
+        aiResult = buildFallbackAiResult(captured, extraction);
+      }
+
+      // Guarantee statement_en is never empty
+      if (!aiResult.statement_en) {
+        aiResult = { ...buildFallbackAiResult(captured, extraction), ...aiResult };
+      }
+
+      // Generate compressed thumbnail for storage (full-res stays in React state for session preview)
+      const thumbnailDataUrl = captured.photoDataUrl
+        ? await compressThumbnail(captured.photoDataUrl)
+        : "";
 
       saveEvidence({
         ...captured,
+        // Store thumbnail only — full-res image is NOT persisted to localStorage
+        photoDataUrl: thumbnailDataUrl,
+        // videoBlob is never serialisable — strip it; videoUrl is a blob: URL (session-only)
+        videoBlob: undefined,
+        videoUrl: captured.mediaType === "video" ? "" : captured.videoUrl,
         status,
         riskLevel,
         sealed: true,
         sealedAt,
         firGenerated: status === "Flagged",
+        offenseKeywords: extraction.offense_keywords || [],
+        crimeCategory: extraction.crime_category || captured.incidentType,
         aiAnalysis: aiResult,
         custodyTimeline: [
           { label: "Captured", labelUr: "ثبوت ریکارڈ کیا گیا", at: captured.timestamp },
@@ -238,10 +372,12 @@ function CaptureEvidence() {
           reader.onerror = () => reject(new Error("Failed to read image file"));
           reader.readAsDataURL(file);
         });
+        // Keep full dataUrl in React state for session preview
+        // Thumbnail is generated at seal time before storage
         setCaptured({
           id: crypto.randomUUID(),
           mediaType: "photo",
-          photoDataUrl: dataUrl,
+          photoDataUrl: dataUrl,   // full-res — session only, stripped before saveEvidence
           videoUrl: "",
           hash,
           timestamp,
@@ -257,7 +393,7 @@ function CaptureEvidence() {
           id: crypto.randomUUID(),
           mediaType: "video",
           photoDataUrl: "",
-          videoUrl,
+          videoUrl,               // blob: URL — session only, not stored
           hash,
           timestamp,
           ...meta,

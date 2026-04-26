@@ -25,7 +25,7 @@ let _indexCache = null; // { idf, docVectors, corpus }
 
 const IDB_NAME = "shahid_rag";
 const IDB_STORE = "index_cache";
-const IDB_KEY = "v1";
+const IDB_KEY = "v2"; // bumped from v1 — forces rebuild with new scoring
 
 function openIDB() {
   return new Promise((resolve, reject) => {
@@ -177,32 +177,56 @@ function keywordOverlap(queryTokens, doc) {
 
 // ─── Explainability ───────────────────────────────────────────────────────────
 
-function buildReason(queryTokens, doc, scores) {
+function buildReason(queryTokens, doc, scores, allKeywords = []) {
   const matchedKeywords = (doc.keywords || []).filter((k) => queryTokens.includes(k.toLowerCase()));
   const matchedTags = (doc.offense_tags || []).filter((t) => queryTokens.some((q) => t.toLowerCase().includes(q)));
+  const matchedExpanded = allKeywords.filter((k) =>
+    (doc.keywords || []).some((dk) => dk.toLowerCase() === k.toLowerCase()) ||
+    (doc.offense_tags || []).some((dt) => dt.toLowerCase() === k.toLowerCase())
+  );
   const parts = [];
   if (matchedKeywords.length) parts.push(`Keyword match: ${matchedKeywords.slice(0, 3).join(", ")}`);
   if (matchedTags.length) parts.push(`Offense category: ${matchedTags.slice(0, 2).join(", ")}`);
-  if (scores.bm25 > 1) parts.push(`High lexical relevance (BM25: ${scores.bm25.toFixed(2)})`);
+  if (matchedExpanded.length && !matchedKeywords.length) parts.push(`Offense expansion: ${matchedExpanded.slice(0, 3).join(", ")}`);
+  if (scores.bm25 > 1) parts.push(`Lexical relevance BM25: ${scores.bm25.toFixed(2)}`);
   if (scores.cosine > 0.15) parts.push(`Semantic similarity: ${(scores.cosine * 100).toFixed(0)}%`);
+  if (scores.tagHits > 0) parts.push(`Tag hits: ${scores.tagHits}`);
   return parts.length ? parts.join(" · ") : "Contextual relevance to incident type";
 }
 
 // ─── Main retrieval function ──────────────────────────────────────────────────
 
+// ─── Offense keyword expansion map ───────────────────────────────────────────
+// Expands a single incidentType into known corpus keywords before retrieval.
+// Ensures short queries still hit relevant corpus sections.
+const OFFENSE_EXPANSION = {
+  theft:      ["theft", "steal", "stolen", "moveable", "property", "dishonest", "possession", "snatching", "pickpocket"],
+  robbery:    ["robbery", "rob", "force", "violence", "threat", "hurt", "weapon", "armed", "snatched", "restraint"],
+  violent:    ["assault", "attack", "hurt", "injury", "violent", "beat", "wound", "murder", "qatl", "weapon", "kill"],
+  fraud:      ["fraud", "cheat", "deceive", "false", "scam", "dishonest", "money", "fake", "forgery", "document"],
+  weapons:    ["weapon", "armed", "gun", "knife", "deadly", "rioting", "arms", "illegal", "possession", "lathi"],
+  suspicious: ["suspicious", "attempt", "abetment", "conspiracy", "trespass", "unlawful", "intent", "preparation"],
+  burglary:   ["burglary", "break", "enter", "dwelling", "house", "theft", "trespass", "property", "building"],
+  harassment: ["harassment", "threat", "intimidate", "woman", "modesty", "stalk", "coerce", "force", "verbal"],
+  cybercrime: ["cyber", "hack", "unauthorized", "online", "digital", "computer", "stalk", "defamation", "access"],
+  assault:    ["assault", "attack", "hurt", "injury", "violent", "beat", "wound", "force", "weapon", "limb"],
+};
+
 /**
  * retrieve(query, options)
  * @param {string} query — free text (incident type, description, keywords)
- * @param {object} options — { topK: number, incidentType: string }
- * @returns {Array<{ section, act, title, score, reason, citation_text, explanation, id }>}
+ * @param {object} options — { topK, incidentType, offenseKeywords[] }
+ * @returns {Array<{ section, act, title, score, reason, citation_text, explanation, id, retrievalSignals }>}
  */
 export async function retrieve(query, options = {}) {
-  const { topK = 5, incidentType = "" } = options;
+  const { topK = 5, incidentType = "", offenseKeywords = [] } = options;
 
-  // Ensure index is loaded
   const index = await getOrBuildIndex();
 
-  const queryText = [query, incidentType].join(" ");
+  // Enrich query with offense keyword expansion — prevents empty results on short queries
+  const expansionTerms = OFFENSE_EXPANSION[incidentType] || OFFENSE_EXPANSION[query.trim().toLowerCase()] || [];
+  const allKeywords = [...new Set([...offenseKeywords, ...expansionTerms])];
+  const queryText = [query, incidentType, allKeywords.join(" ")].join(" ");
   const queryTokens = tokenize(queryText);
   if (!queryTokens.length) return [];
 
@@ -211,44 +235,58 @@ export async function retrieve(query, options = {}) {
   const queryVec = {};
   Object.keys(queryTf).forEach((t) => { queryVec[t] = queryTf[t] * (index.idf[t] || 1); });
 
-  // Compute doc lengths for BM25 avg
+  // BM25 avg doc length
   const docLengths = index.corpus.map((doc) => {
     const text = [doc.title, doc.full_text, doc.explanation, (doc.keywords || []).join(" ")].join(" ");
     return tokenize(text).length;
   });
   const avgDocLen = docLengths.reduce((a, b) => a + b, 0) / Math.max(docLengths.length, 1);
 
-  const results = index.corpus.map((doc, i) => {
+  const results = index.corpus.map((doc) => {
     const text = [doc.title, doc.full_text, doc.explanation, (doc.keywords || []).join(" "), (doc.offense_tags || []).join(" ")].join(" ");
     const docTokensList = tokenize(text);
 
     const bm25 = bm25Score(queryTokens, docTokensList, index.idf, avgDocLen);
     const cosine = cosineSim(queryVec, index.docVectors[doc.id] || {});
     const overlap = keywordOverlap(queryTokens, doc);
+    // Tag bonus: direct offense_tag match against expanded keywords
+    const tagHits = (doc.offense_tags || []).filter((t) =>
+      allKeywords.some((k) => t.toLowerCase().includes(k.toLowerCase()) || k.toLowerCase().includes(t.toLowerCase()))
+    ).length;
+    const tagBonus = tagHits * 8;
 
-    // Hybrid score: weighted combination
-    const hybrid = bm25 * 0.5 + cosine * 30 + overlap * 20;
+    const hybrid = bm25 * 0.5 + cosine * 30 + overlap * 20 + tagBonus;
 
-    return {
-      doc,
-      scores: { bm25, cosine, overlap, hybrid },
-    };
+    return { doc, scores: { bm25, cosine, overlap, tagBonus, tagHits, hybrid } };
   });
 
-  // Sort by hybrid score, take top-k
   results.sort((a, b) => b.scores.hybrid - a.scores.hybrid);
-  const topResults = results.slice(0, topK).filter((r) => r.scores.hybrid > 0.5);
 
-  return topResults.map((r) => ({
+  // Adaptive threshold: short queries get a lower bar so obvious crimes always return results
+  const isShortQuery = queryTokens.length <= 4;
+  const threshold = isShortQuery ? 0.1 : 0.5;
+  const topResults = results.slice(0, topK).filter((r) => r.scores.hybrid > threshold);
+
+  // Guarantee minimum 3 results for known incident types
+  const finalResults = topResults.length >= 3 ? topResults : results.slice(0, Math.min(topK, 3));
+
+  return finalResults.map((r) => ({
     id: r.doc.id,
     section: r.doc.section,
     act: r.doc.act,
     title: r.doc.title,
     score: Math.min(99, Math.round(r.scores.hybrid * 4 + 40)),
-    reason: buildReason(queryTokens, r.doc, r.scores),
+    reason: buildReason(queryTokens, r.doc, r.scores, allKeywords),
     citation_text: r.doc.full_text,
     explanation: r.doc.explanation,
     offense_tags: r.doc.offense_tags,
+    retrievalSignals: {
+      bm25: parseFloat(r.scores.bm25.toFixed(3)),
+      cosine: parseFloat((r.scores.cosine * 100).toFixed(1)),
+      keywordOverlap: parseFloat((r.scores.overlap * 100).toFixed(1)),
+      tagHits: r.scores.tagHits,
+      hybrid: parseFloat(r.scores.hybrid.toFixed(3)),
+    },
   }));
 }
 
@@ -266,7 +304,7 @@ async function getOrBuildIndex() {
   }
 
   // 3. sessionStorage
-  const ssCached = ssGet("shahid_rag_v1");
+  const ssCached = ssGet("shahid_rag_v2");
   if (ssCached && ssCached.corpus && ssCached.idf) {
     _indexCache = ssCached;
     return _indexCache;
@@ -279,7 +317,7 @@ async function getOrBuildIndex() {
   // Persist to IndexedDB (async, non-blocking)
   idbSet(IDB_KEY, index).catch(() => {});
   // Tertiary: sessionStorage (may fail on large payload — silent)
-  ssSet("shahid_rag_v1", index);
+  ssSet("shahid_rag_v2", index);
 
   return _indexCache;
 }
@@ -294,7 +332,7 @@ export function preloadIndex() {
 
 /**
  * Retrieve laws for a specific evidence record.
- * Builds query from incident type + AI statement + location.
+ * Builds query from incident type + AI statement + offense keywords extracted at seal time.
  */
 export async function retrieveForEvidence(evidence) {
   if (!evidence) return [];
@@ -304,7 +342,14 @@ export async function retrieveForEvidence(evidence) {
     ai.statement_en || "",
     ai.risk_assessment || "",
     evidence.locationLabel || "",
-  ].join(" ").slice(0, 500); // cap query length
+  ].join(" ").slice(0, 500);
 
-  return retrieve(query, { topK: 5, incidentType: evidence.incidentType || "" });
+  // Use offense keywords stored at seal time (Stage A extraction) if available
+  const offenseKeywords = Array.isArray(evidence.offenseKeywords) ? evidence.offenseKeywords : [];
+
+  return retrieve(query, {
+    topK: 5,
+    incidentType: evidence.incidentType || "",
+    offenseKeywords,
+  });
 }
